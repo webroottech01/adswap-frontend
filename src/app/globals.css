@@ -1,0 +1,24 @@
+/* Minimal custom CSS - Bootstrap handles most styling */
+
+:root {
+  --bs-body-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure Bootstrap modals work correctly */
+.modal-backdrop {
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+.modal.show {
+  display: block;
+}
+

@@ -1,0 +1,216 @@
+/* AdSwap Bootstrap Custom Styles */
+
+:root {
+  --bs-primary: #2563eb;
+  --bs-primary-rgb: 37, 99, 235;
+  --bs-secondary: #64748b;
+  --bs-success: #10b981;
+  --bs-danger: #ef4444;
+  --bs-warning: #f59e0b;
+  --bs-info: #06b6d4;
+  --bs-light: #f8fafc;
+  --bs-dark: #0f172a;
+  
+  --bs-body-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --bs-body-bg: #f8fafc;
+  --bs-body-color: #334155;
+  
+  --bs-border-radius: 0.5rem;
+  --bs-border-radius-sm: 0.375rem;
+  --bs-border-radius-lg: 0.75rem;
+  --bs-border-radius-xl: 1rem;
+}
+
+/* Card Enhancements */
+.card {
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Button Enhancements */
+.btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 260px;
+  overflow-y: auto;
+}
+
+.sidebar-nav {
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar-nav-item {
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  color: #475569;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.sidebar-nav-link:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.sidebar-nav-link.active {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.sidebar-nav-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.75rem;
+}
+
+/* Badge Enhancements */
+.badge {
+  font-weight: 500;
+  padding: 0.25em 0.6em;
+  border-radius: 0.375rem;
+}
+
+/* Alert Enhancements */
+.alert {
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+}
+
+/* Form Controls */
+.form-control, .form-select {
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  padding: 0.625rem 0.75rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.1);
+}
+
+/* Progress Bar */
+.progress {
+  height: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: #e2e8f0;
+}
+
+.progress-bar {
+  background-color: #2563eb;
+}
+
+/* Table Enhancements */
+.table {
+  border-color: #e2e8f0;
+}
+
+.table > :not(caption) > * > * {
+  border-bottom-color: #e2e8f0;
+}
+
+/* Modal Enhancements */
+.modal-content {
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+/* Utility Classes */
+.text-muted {
+  color: #64748b !important;
+}
+
+.bg-light-blue {
+  background-color: #dbeafe !important;
+}
+
+.bg-light-green {
+  background-color: #d1fae5 !important;
+}
+
+.bg-light-purple {
+  background-color: #e9d5ff !important;
+}
+
+.text-blue {
+  color: #2563eb !important;
+}
+
+.text-green {
+  color: #10b981 !important;
+}
+
+.text-purple {
+  color: #8b5cf6 !important;
+}
+
+/* Stats Card */
+.stats-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.stats-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Dashboard Layout */
+.dashboard-content {
+  margin-left: 260px;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  padding: 1.5rem;
+}
+
+/* Unread Message Indicator */
+.unread-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: #2563eb;
+  border-radius: 50%;
+}
+
+/* Trending Icons */
+.trend-up {
+  color: #10b981;
+}
+
+.trend-down {
+  color: #ef4444;
+}
+
