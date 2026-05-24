@@ -65,7 +65,7 @@ export const useBusinessForm = () => {
         const parsed = JSON.parse(savedData);
         // Restore form values (excluding File objects which can't be serialized)
         Object.keys(parsed).forEach((key) => {
-          if (key !== 'brandProofs' && key !== 'businessDocuments' && key !== 'promotionalMedia') {
+          if (key !== 'brandProofs' && key !== 'businessDocuments') {
             form.setValue(key as keyof BusinessFormData, parsed[key]);
           }
         });
@@ -88,7 +88,6 @@ export const useBusinessForm = () => {
       const dataToSave = { ...data };
       delete dataToSave.brandProofs;
       delete dataToSave.businessDocuments;
-      delete dataToSave.promotionalMedia; // Legacy field
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     });
     return () => subscription.unsubscribe();
@@ -204,18 +203,13 @@ export const useBusinessForm = () => {
       }
       
       // Transform form data to backend format
-      const backendData = existingBusiness
-        ? transformFormToUpdateData(formData, enabledServices)
-        : transformFormToCreateData(formData, enabledServices);
-
-      console.log('Transformed backend data:', JSON.stringify(backendData, null, 2));
-
-      // Submit to backend
       let business: Business;
       if (existingBusiness) {
-        business = await businessApi.updateBusiness(backendData);
+        const updateData = transformFormToUpdateData(formData, enabledServices);
+        business = await businessApi.updateBusiness(updateData);
       } else {
-        business = await businessApi.createBusiness(backendData);
+        const createData = transformFormToCreateData(formData, enabledServices);
+        business = await businessApi.createBusiness(createData);
       }
 
       console.log('Business created/updated successfully:', business);

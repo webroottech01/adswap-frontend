@@ -87,11 +87,11 @@ export function BusinessCardPreview({ data }: BusinessCardPreviewProps) {
           </div>
         )}
 
-        {data.promotionalMedia && data.promotionalMedia.length > 0 && (
+        {data.brandProofs && data.brandProofs.length > 0 && (
           <div className="border-top pt-3 mt-3">
-            <h6 className="small fw-bold mb-2">Promotional Media:</h6>
+            <h6 className="small fw-bold mb-2">Brand Proof:</h6>
             <small className="text-muted">
-              {data.promotionalMedia.length} file(s) uploaded
+              {data.brandProofs.length} file(s) uploaded
             </small>
           </div>
         )}

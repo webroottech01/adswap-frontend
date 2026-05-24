@@ -34,10 +34,10 @@ export interface BusinessFormData {
   providesAdServices: boolean;
   isBuyer: boolean;
   paidPromotion?: boolean;
-  paidPromotionTypes?: PaidPromotionType[];
+  paidPromotionTypes?: string[];
   crossMarketing?: boolean;
-  crossMarketingTypes?: CrossMarketingType[];
-  collaborationPreferences?: Record<string, any>;
+  crossMarketingTypes?: string[];
+  collaborationPreferences?: Record<string, unknown>;
 
   // Step 4: Business Profile Info + Scale + Audience (optional)
   scale?: 'micro' | 'small' | 'medium' | 'large';
@@ -92,7 +92,7 @@ export const step1Schema = z.object({
 // Step 2: Business Identity (required)
 export const step2Schema = z.object({
   businessType: z.enum(['individual', 'partnership', 'company'], {
-    required_error: 'Business type is required',
+    message: 'Business type is required',
   }),
   registrationNumber: z.string().optional(),
   foundedYear: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
@@ -104,10 +104,10 @@ export const step3Schema = z.object({
   providesAdServices: z.boolean(),
   isBuyer: z.boolean(),
   paidPromotion: z.boolean().optional(),
-  paidPromotionTypes: z.array(z.enum(['hoardings', 'pamphlets', 'space'])).optional(),
+  paidPromotionTypes: z.array(z.string()).optional(),
   crossMarketing: z.boolean().optional(),
-  crossMarketingTypes: z.array(z.enum(['coupons', 'discounts'])).optional(),
-  collaborationPreferences: z.record(z.any()).optional(),
+  crossMarketingTypes: z.array(z.string()).optional(),
+  collaborationPreferences: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Step 4: Business Profile Info + Scale + Audience (optional)
@@ -119,7 +119,7 @@ export const step4Schema = z.object({
   industryExperienceYears: z.number().int().min(0).max(100).optional(),
   keyProductsServices: z.array(z.string()).optional(),
   geographicReach: z.array(z.string()).optional(),
-  socialMediaHandles: z.record(z.string()).optional(),
+  socialMediaHandles: z.record(z.string(), z.string()).optional(),
   additionalInfo: z.string().max(2000).optional(),
 });
 

@@ -30,7 +30,3 @@ export { useLogin as useLoginLegacy } from './hooks/useLogin';
  * @deprecated Use useRegister from './public' instead
  */
 export { useRegister as useRegisterLegacy } from './hooks/useRegister';
-
-// API types (for internal use)
-export type { User as ApiUser, LoginCredentials, RegisterData as RegisterDataApi } from './api';
-

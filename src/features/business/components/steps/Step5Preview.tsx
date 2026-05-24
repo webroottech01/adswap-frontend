@@ -154,18 +154,18 @@ export function Step5Preview({ form, onEditStep }: Step5PreviewProps) {
               </div>
             )}
 
-            {/* Step 4 Details */}
-            {data.promotionalMedia && data.promotionalMedia.length > 0 && (
+            {/* Brand proof details */}
+            {data.brandProofs && data.brandProofs.length > 0 && (
               <div className="col-12 col-md-6">
                 <div className="card h-100">
                   <div className="card-header d-flex align-items-center justify-content-between">
-                    <h6 className="mb-0">Promotional Media</h6>
+                    <h6 className="mb-0">Brand Proof</h6>
                     <Button
                       variant="secondary"
                       size="sm"
                       outline
                       icon={Edit}
-                      onClick={() => onEditStep(4)}
+                      onClick={() => onEditStep(6)}
                     >
                       Edit
                     </Button>
@@ -174,7 +174,7 @@ export function Step5Preview({ form, onEditStep }: Step5PreviewProps) {
                     <div>
                       <strong>Files:</strong>
                       <div className="text-muted small">
-                        {data.promotionalMedia.length} file(s) uploaded
+                        {data.brandProofs.length} file(s) uploaded
                       </div>
                     </div>
                   </div>
@@ -182,7 +182,7 @@ export function Step5Preview({ form, onEditStep }: Step5PreviewProps) {
               </div>
             )}
 
-            {/* Step 6 Details */}
+            {/* Step 7 Details */}
             {data.businessDocuments && data.businessDocuments.length > 0 && (
               <div className="col-12 col-md-6">
                 <div className="card h-100">

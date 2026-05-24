@@ -84,12 +84,12 @@ export function MarketplaceCard({ listing, isAuthenticated, onCollaborateClick }
             <div className="mt-3">
               <div className="d-flex flex-wrap gap-1">
                 {listing.services.slice(0, 3).map((service) => (
-                  <Badge key={service} variant="outline" className="small">
+                  <Badge key={service} variant="secondary" className="small">
                     {service}
                   </Badge>
                 ))}
                 {listing.services.length > 3 && (
-                  <Badge variant="outline" className="small">
+                  <Badge variant="secondary" className="small">
                     +{listing.services.length - 3} more
                   </Badge>
                 )}

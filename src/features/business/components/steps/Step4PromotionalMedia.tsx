@@ -14,14 +14,14 @@ interface Step4PromotionalMediaProps {
  */
 export function Step4PromotionalMedia({ form }: Step4PromotionalMediaProps) {
   const { setValue, watch } = form;
-  const promotionalMedia = watch('promotionalMedia') || [];
+  const brandProofs = watch('brandProofs') || [];
   const [previews, setPreviews] = useState<Record<number, string>>({});
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      const updatedFiles = [...promotionalMedia, ...files];
-      setValue('promotionalMedia', updatedFiles);
+      const updatedFiles = [...brandProofs, ...files];
+      setValue('brandProofs', updatedFiles);
 
       // Create previews for image files
       files.forEach((file, index) => {
@@ -30,7 +30,7 @@ export function Step4PromotionalMedia({ form }: Step4PromotionalMediaProps) {
           reader.onloadend = () => {
             setPreviews((prev) => ({
               ...prev,
-              [promotionalMedia.length + index]: reader.result as string,
+              [brandProofs.length + index]: reader.result as string,
             }));
           };
           reader.readAsDataURL(file);
@@ -40,8 +40,8 @@ export function Step4PromotionalMedia({ form }: Step4PromotionalMediaProps) {
   };
 
   const removeFile = (index: number) => {
-    const updatedFiles = promotionalMedia.filter((_, i) => i !== index);
-    setValue('promotionalMedia', updatedFiles);
+    const updatedFiles = brandProofs.filter((_, i) => i !== index);
+    setValue('brandProofs', updatedFiles);
     setPreviews((prev) => {
       const newPreviews = { ...prev };
       delete newPreviews[index];
@@ -72,11 +72,11 @@ export function Step4PromotionalMedia({ form }: Step4PromotionalMediaProps) {
           </small>
         </div>
 
-        {promotionalMedia.length > 0 && (
+        {brandProofs.length > 0 && (
           <div>
-            <h6 className="mb-3">Uploaded Files ({promotionalMedia.length})</h6>
+            <h6 className="mb-3">Uploaded Files ({brandProofs.length})</h6>
             <div className="row g-3">
-              {promotionalMedia.map((file, index) => (
+              {brandProofs.map((file, index) => (
                 <div key={index} className="col-12 col-md-6 col-lg-4">
                   <div className="card">
                     <div className="card-body p-2">

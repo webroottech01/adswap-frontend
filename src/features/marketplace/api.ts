@@ -75,7 +75,7 @@ export const marketplaceApi = {
    * Get filter metadata (categories, cities, revenue ranges)
    */
   async getFilterMetadata(): Promise<MarketplaceFilterMetadata> {
-    const response = await api.get<{ data: MarketplaceFilterMetadata }>('/v1/marketplace/metadata');
+    const response = await api.get<MarketplaceFilterMetadata>('/v1/marketplace/metadata');
     return response.data;
   },
 };
