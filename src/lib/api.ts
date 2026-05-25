@@ -51,7 +51,7 @@ class ApiClient {
   private authTokenKey: string;
 
   constructor() {
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com';
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com/api';
     this.authTokenKey = process.env.NEXT_PUBLIC_AUTH_TOKEN_KEY || 'auth_token';
 
     this.client = axios.create({

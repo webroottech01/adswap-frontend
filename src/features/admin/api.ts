@@ -56,7 +56,7 @@ export const adminApi = {
     }
 
     // Use raw axios call to get the full paginated response without data extraction
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com';
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com/api';
     const token = localStorage.getItem('auth_token');
     
     const axiosResponse = await axios.get<PaginatedResponse<Business>>(
@@ -93,7 +93,7 @@ export const adminApi = {
       params.append('is_buyer', filters.is_buyer.toString());
     }
 
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com';
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com/api';
     const token = localStorage.getItem('auth_token');
     
     const axiosResponse = await axios.get<BusinessStatistics>(
