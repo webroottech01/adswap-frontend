@@ -12,14 +12,14 @@ export interface AdminCollaborationsQueryParams {
 
 export const adminCollaborationsApi = {
   async getCollaborations(params: AdminCollaborationsQueryParams = {}): Promise<AdminCollaborationListResponse> {
-    const response = await api.get<AdminCollaborationListResponse>('/v1/admin/collaborations', {
+    const response = await api.get<AdminCollaborationListResponse>('/api/v1/admin/collaborations', {
       params,
     });
     return response.data;
   },
 
   async getCollaboration(id: number): Promise<AdminCollaboration> {
-    const response = await api.get<AdminCollaboration>(`/v1/admin/collaborations/${id}`);
+    const response = await api.get<AdminCollaboration>(`/api/v1/admin/collaborations/${id}`);
     return response.data;
   },
 };

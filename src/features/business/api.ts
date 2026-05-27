@@ -162,7 +162,7 @@ export const businessApi = {
    * Get all active business categories
    */
   async getCategories(): Promise<BusinessCategory[]> {
-    const response = await api.get<BusinessCategory[]>('/v1/business/categories');
+    const response = await api.get<BusinessCategory[]>('/api/v1/business/categories');
     return Array.isArray(response.data) ? response.data : [];
   },
 
@@ -179,7 +179,7 @@ export const businessApi = {
       config.headers = { 'Content-Type': undefined };
     }
     
-    const response = await api.post<Business>('/v1/business', data, config);
+    const response = await api.post<Business>('/api/v1/business', data, config);
     // The api.post already extracts response.data, so response.data is the Business object
     return response.data;
   },
@@ -188,7 +188,7 @@ export const businessApi = {
    * Get the authenticated user's business
    */
   async getMyBusiness(): Promise<Business> {
-    const response = await api.get<Business>('/v1/business/me');
+    const response = await api.get<Business>('/api/v1/business/me');
     return response.data;
   },
 
@@ -196,7 +196,7 @@ export const businessApi = {
    * Update the authenticated user's business
    */
   async updateBusiness(data: UpdateBusinessData): Promise<Business> {
-    const response = await api.put<Business>('/v1/business/me', data);
+    const response = await api.put<Business>('/api/v1/business/me', data);
     return response.data;
   },
 };

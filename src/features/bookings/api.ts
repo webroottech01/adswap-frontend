@@ -11,7 +11,7 @@ export const bookingsApi = {
     if (filters.to) params.to = filters.to;
     if (typeof filters.business_id === 'number') params.business_id = filters.business_id;
 
-    const response = await api.get<PaginatedResponse<Booking>>('/v1/bookings', {
+    const response = await api.get<PaginatedResponse<Booking>>('/api/v1/bookings', {
       params,
     });
 

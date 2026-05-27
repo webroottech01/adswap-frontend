@@ -55,10 +55,10 @@ export const marketplaceApi = {
     }
 
     // Use raw axios call to get the full paginated response without data extraction
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com/api';
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com';
     
     const axiosResponse = await axios.get<PaginatedResponse<MarketplaceListing>>(
-      `${baseURL}/v1/marketplace?${params.toString()}`,
+      `${baseURL}/api/v1/marketplace?${params.toString()}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ export const marketplaceApi = {
    * Get filter metadata (categories, cities, revenue ranges)
    */
   async getFilterMetadata(): Promise<MarketplaceFilterMetadata> {
-    const response = await api.get<MarketplaceFilterMetadata>('/v1/marketplace/metadata');
+    const response = await api.get<MarketplaceFilterMetadata>('/api/v1/marketplace/metadata');
     return response.data;
   },
 };

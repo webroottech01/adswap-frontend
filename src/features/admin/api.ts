@@ -56,11 +56,11 @@ export const adminApi = {
     }
 
     // Use raw axios call to get the full paginated response without data extraction
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com/api';
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com';
     const token = localStorage.getItem('auth_token');
     
     const axiosResponse = await axios.get<PaginatedResponse<Business>>(
-      `${baseURL}/v1/admin/businesses?${params.toString()}`,
+      `${baseURL}/api/v1/admin/businesses?${params.toString()}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -93,11 +93,11 @@ export const adminApi = {
       params.append('is_buyer', filters.is_buyer.toString());
     }
 
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com/api';
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com';
     const token = localStorage.getItem('auth_token');
     
     const axiosResponse = await axios.get<BusinessStatistics>(
-      `${baseURL}/v1/admin/businesses/statistics?${params.toString()}`,
+      `${baseURL}/api/v1/admin/businesses/statistics?${params.toString()}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export const adminApi = {
    * Approve a business
    */
   async approveBusiness(id: number): Promise<Business> {
-    const response = await api.patch<Business>(`/v1/admin/businesses/${id}/approve`);
+    const response = await api.patch<Business>(`/api/v1/admin/businesses/${id}/approve`);
     return response.data;
   },
 
@@ -122,7 +122,7 @@ export const adminApi = {
    * Reject a business
    */
   async rejectBusiness(id: number): Promise<Business> {
-    const response = await api.patch<Business>(`/v1/admin/businesses/${id}/reject`);
+    const response = await api.patch<Business>(`/api/v1/admin/businesses/${id}/reject`);
     return response.data;
   },
 
@@ -130,7 +130,7 @@ export const adminApi = {
    * Suspend a business
    */
   async suspendBusiness(id: number): Promise<Business> {
-    const response = await api.patch<Business>(`/v1/admin/businesses/${id}/suspend`);
+    const response = await api.patch<Business>(`/api/v1/admin/businesses/${id}/suspend`);
     return response.data;
   },
 };

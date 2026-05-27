@@ -76,7 +76,7 @@ export const serviceCatalogApi = {
    * Get all service categories
    */
   async getCategories(): Promise<ServiceCategory[]> {
-    const response = await api.get<ServiceCategory[]>('/v1/admin/service-categories');
+    const response = await api.get<ServiceCategory[]>('/api/v1/admin/service-categories');
     // Handle both wrapped and direct array responses
     const data = Array.isArray(response.data) ? response.data : (response.data as any)?.data || [];
     return Array.isArray(data) ? data : [];
@@ -86,7 +86,7 @@ export const serviceCatalogApi = {
    * Create a new service category
    */
   async createCategory(data: CreateServiceCategoryData): Promise<ServiceCategory> {
-    const response = await api.post<ServiceCategory>('/v1/admin/service-categories', data);
+    const response = await api.post<ServiceCategory>('/api/v1/admin/service-categories', data);
     return response.data;
   },
 
@@ -94,7 +94,7 @@ export const serviceCatalogApi = {
    * Get all services
    */
   async getServices(): Promise<Service[]> {
-    const response = await api.get<Service[]>('/v1/admin/services');
+    const response = await api.get<Service[]>('/api/v1/admin/services');
     // Handle both wrapped and direct array responses
     const data = Array.isArray(response.data) ? response.data : (response.data as any)?.data || [];
     return Array.isArray(data) ? data : [];
@@ -104,7 +104,7 @@ export const serviceCatalogApi = {
    * Create a new service
    */
   async createService(data: CreateServiceData): Promise<Service> {
-    const response = await api.post<Service>('/v1/admin/services', data);
+    const response = await api.post<Service>('/api/v1/admin/services', data);
     return response.data;
   },
 
@@ -112,7 +112,7 @@ export const serviceCatalogApi = {
    * Update a service
    */
   async updateService(id: number, data: UpdateServiceData): Promise<Service> {
-    const response = await api.put<Service>(`/v1/admin/services/${id}`, data);
+    const response = await api.put<Service>(`/api/v1/admin/services/${id}`, data);
     return response.data;
   },
 
@@ -120,7 +120,7 @@ export const serviceCatalogApi = {
    * Toggle service enabled status
    */
   async toggleService(id: number): Promise<Service> {
-    const response = await api.patch<Service>(`/v1/admin/services/${id}/toggle`);
+    const response = await api.patch<Service>(`/api/v1/admin/services/${id}/toggle`);
     return response.data;
   },
 };

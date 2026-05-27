@@ -36,7 +36,7 @@ export const authApi = {
    * Login user and receive JWT token
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/v1/auth/login', credentials);
+    const response = await api.post<AuthResponse>('/api/v1/auth/login', credentials);
     return response.data;
   },
 
@@ -44,7 +44,7 @@ export const authApi = {
    * Register new user and receive JWT token
    */
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/v1/auth/register', data);
+    const response = await api.post<AuthResponse>('/api/v1/auth/register', data);
     return response.data;
   },
 
@@ -52,14 +52,14 @@ export const authApi = {
    * Logout user and invalidate token
    */
   async logout(): Promise<void> {
-    await api.post('/v1/auth/logout');
+    await api.post('/api/v1/auth/logout');
   },
 
   /**
    * Get current authenticated user
    */
   async getCurrentUser(): Promise<User> {
-    const response = await api.get<User>('/v1/auth/me');
+    const response = await api.get<User>('/api/v1/auth/me');
     return response.data;
   },
 };

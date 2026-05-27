@@ -23,7 +23,7 @@ export interface AuthResponse {
 
 export const authApi = {
   login: async (credentials: LoginCredentials) => {
-    const response = await api.post<AuthResponse>('/v1/auth/login', credentials);
+    const response = await api.post<AuthResponse>('/api/v1/auth/login', credentials);
     if (response.data?.token) {
       api.setAuthToken(response.data.token);
     }
@@ -31,7 +31,7 @@ export const authApi = {
   },
 
   register: async (data: RegisterData) => {
-    const response = await api.post<AuthResponse>('/v1/auth/register', data);
+    const response = await api.post<AuthResponse>('/api/v1/auth/register', data);
     if (response.data?.token) {
       api.setAuthToken(response.data.token);
     }
@@ -40,14 +40,14 @@ export const authApi = {
 
   logout: async () => {
     try {
-      await api.post('/v1/auth/logout');
+      await api.post('/api/v1/auth/logout');
     } finally {
       api.clearAuthToken();
     }
   },
 
   me: async () => {
-    return api.get<AuthResponse['user']>('/v1/auth/me');
+    return api.get<AuthResponse['user']>('/api/v1/auth/me');
   },
 };
 

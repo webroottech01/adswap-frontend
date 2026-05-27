@@ -31,7 +31,7 @@ export const profileApi = {
    * Update user profile (name only)
    */
   async updateProfile(data: UpdateProfileData): Promise<Profile> {
-    const response = await api.put<Profile>('/v1/profile', data);
+    const response = await api.put<Profile>('/api/v1/profile', data);
     return response.data;
   },
 
@@ -39,7 +39,7 @@ export const profileApi = {
    * Change user email address
    */
   async changeEmail(data: ChangeEmailData): Promise<Profile> {
-    const response = await api.put<Profile>('/v1/profile/email', data);
+    const response = await api.put<Profile>('/api/v1/profile/email', data);
     return response.data;
   },
 
@@ -47,7 +47,7 @@ export const profileApi = {
    * Change user password
    */
   async changePassword(data: ChangePasswordData): Promise<void> {
-    await api.put('/v1/profile/password', data);
+    await api.put('/api/v1/profile/password', data);
   },
 };
 
