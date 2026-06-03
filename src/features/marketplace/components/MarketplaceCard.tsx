@@ -21,7 +21,6 @@ export function MarketplaceCard({
   isAuthenticated,
   myBusinessId,
   onCollaborateClick,
-  onChatClick,
 }: MarketplaceCardProps) {
   const router = useRouter();
   const isOwnListing = myBusinessId != null && myBusinessId === listing.id;
