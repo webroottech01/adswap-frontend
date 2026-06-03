@@ -5,12 +5,15 @@ import { promotionsApi, extractMessage } from './api';
 import type {
   CreatePromotionPayload,
   Promotion,
-  PromotionStatus,
+  PromotionCategory,
   PromotionStatusFilter,
   UpdatePromotionPayload,
 } from './types';
 
-export function usePromotions(statusFilter: PromotionStatusFilter = 'all') {
+export function usePromotions(
+  categoryFilter: PromotionCategory,
+  statusFilter: PromotionStatusFilter = 'all',
+) {
   const [data, setData] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,14 +23,14 @@ export function usePromotions(statusFilter: PromotionStatusFilter = 'all') {
     setError(null);
     try {
       const status = statusFilter === 'all' ? undefined : statusFilter;
-      const list = await promotionsApi.list(status);
+      const list = await promotionsApi.list(categoryFilter, status);
       setData(list);
     } catch (err) {
       setError(extractMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [categoryFilter, statusFilter]);
 
   useEffect(() => {
     refetch();

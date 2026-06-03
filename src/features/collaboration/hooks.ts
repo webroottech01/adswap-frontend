@@ -2,12 +2,31 @@
 
 import { useState, useCallback } from 'react';
 import { collaborationApi } from './api';
-import type { CollaborationRequest } from './types';
+import type { CollaborationRequest, CollaborationStatusFilter } from './types';
 
 /**
  * Fetch sent collaboration requests.
  */
-export function useSentRequests() {
+function apiStatusFilter(
+  filter: CollaborationStatusFilter,
+): 'pending' | 'accepted' | 'rejected' | undefined {
+  if (filter === 'all' || filter === 'negotiate') {
+    return undefined;
+  }
+  return filter;
+}
+
+function applyClientFilter(
+  list: CollaborationRequest[],
+  filter: CollaborationStatusFilter,
+): CollaborationRequest[] {
+  if (filter === 'negotiate') {
+    return list.filter((r) => r.marked_negotiating === true);
+  }
+  return list;
+}
+
+export function useSentRequests(statusFilter: CollaborationStatusFilter = 'all') {
   const [data, setData] = useState<CollaborationRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,8 +35,8 @@ export function useSentRequests() {
     setLoading(true);
     setError(null);
     try {
-      const list = await collaborationApi.getSent();
-      setData(list);
+      const list = await collaborationApi.getSent(apiStatusFilter(statusFilter));
+      setData(applyClientFilter(list, statusFilter));
     } catch (err: unknown) {
       const message = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to load sent requests'
@@ -26,7 +45,7 @@ export function useSentRequests() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter]);
 
   return { data, loading, error, refetch };
 }
@@ -34,7 +53,7 @@ export function useSentRequests() {
 /**
  * Fetch received collaboration requests.
  */
-export function useReceivedRequests() {
+export function useReceivedRequests(statusFilter: CollaborationStatusFilter = 'all') {
   const [data, setData] = useState<CollaborationRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +62,8 @@ export function useReceivedRequests() {
     setLoading(true);
     setError(null);
     try {
-      const list = await collaborationApi.getReceived();
-      setData(list);
+      const list = await collaborationApi.getReceived(apiStatusFilter(statusFilter));
+      setData(applyClientFilter(list, statusFilter));
     } catch (err: unknown) {
       const message = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to load received requests'
@@ -53,9 +72,40 @@ export function useReceivedRequests() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter]);
 
   return { data, loading, error, refetch };
+}
+
+/**
+ * Toggle the private negotiate reminder flag on a collaboration request.
+ */
+export function useNegotiateFlag(options?: { onSuccess?: () => void }) {
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const toggle = useCallback(
+    async (id: number, marked: boolean) => {
+      setLoadingId(id);
+      setError(null);
+      try {
+        await collaborationApi.setNegotiateFlag(id, marked);
+        options?.onSuccess?.();
+      } catch (err: unknown) {
+        const message =
+          err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+              'Failed to update reminder'
+            : 'Failed to update reminder';
+        setError(message);
+      } finally {
+        setLoadingId(null);
+      }
+    },
+    [options],
+  );
+
+  return { toggle, loadingId, error, clearError: () => setError(null) };
 }
 
 /**

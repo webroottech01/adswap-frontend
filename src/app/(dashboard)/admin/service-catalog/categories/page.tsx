@@ -51,8 +51,7 @@ export default function ServiceCategoriesPage() {
   const handleSubmit = async (data: CreateServiceCategoryData) => {
     try {
       if (editingCategory) {
-        // Update not implemented in backend yet, but prepare for it
-        await serviceCatalogApi.createCategory(data);
+        await serviceCatalogApi.updateCategory(editingCategory.id, data);
       } else {
         await serviceCatalogApi.createCategory(data);
       }
@@ -68,6 +67,22 @@ export default function ServiceCategoriesPage() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingCategory(null);
+  };
+
+  const handleDelete = async (category: ServiceCategory) => {
+    const confirmed = window.confirm(
+      `Delete "${category.name}"? The category will be archived (soft delete). ` +
+        'Existing business selections and services are kept for historical records.',
+    );
+    if (!confirmed) return;
+
+    try {
+      setError(null);
+      await serviceCatalogApi.deleteCategory(category.id);
+      await loadCategories();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to delete category');
+    }
   };
 
   if (showForm) {
@@ -135,6 +150,7 @@ export default function ServiceCategoriesPage() {
             categories={categories}
             loading={loading}
             onEdit={handleEdit}
+            onDelete={handleDelete}
             onRefresh={loadCategories}
           />
         </div>

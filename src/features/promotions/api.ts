@@ -2,6 +2,7 @@ import api, { ApiError } from '@/lib/api';
 import type {
   CreatePromotionPayload,
   Promotion,
+  PromotionCategory,
   PromotionMedia,
   PromotionStatus,
   UpdatePromotionPayload,
@@ -16,8 +17,11 @@ function extractMessage(error: unknown): string {
 }
 
 export const promotionsApi = {
-  async list(status?: PromotionStatus): Promise<Promotion[]> {
-    const params = status ? { status } : undefined;
+  async list(category: PromotionCategory, status?: PromotionStatus): Promise<Promotion[]> {
+    const params: Record<string, string> = { category };
+    if (status) {
+      params.status = status;
+    }
     const response = await api.get<Promotion[]>('/api/v1/promotions', { params });
     return Array.isArray(response.data) ? response.data : [];
   },

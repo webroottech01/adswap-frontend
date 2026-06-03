@@ -1,16 +1,24 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/ui/Card';
 import { Badge } from '@/ui/Badge';
 import type { Booking } from '../types';
+import { bookingsApi } from '../api';
+import { BookingScheduleProgress } from './BookingScheduleProgress';
+import { BookingDeliverables } from './BookingDeliverables';
+import { BookingReviewForm } from './BookingReviewForm';
 
 interface BookingCardProps {
   booking: Booking;
+  onReviewSubmitted?: () => void;
 }
 
-export function BookingCard({ booking }: BookingCardProps) {
+export function BookingCard({ booking, onReviewSubmitted }: BookingCardProps) {
   const router = useRouter();
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const acceptedDate = new Date(booking.accepted_at);
   const acceptedLabel = Number.isNaN(acceptedDate.getTime())
@@ -27,10 +35,31 @@ export function BookingCard({ booking }: BookingCardProps) {
     router.push(`/marketplace?business_id=${booking.partner_business_id}`);
   };
 
+  const handleSubmitReview = async (collaborationId: number, rating: number, comment: string) => {
+    setReviewLoading(true);
+    setReviewError(null);
+    try {
+      await bookingsApi.submitReview(collaborationId, {
+        rating,
+        comment: comment || undefined,
+      });
+      onReviewSubmitted?.();
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            'Failed to submit review'
+          : 'Failed to submit review';
+      setReviewError(message);
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   const providerLabel = booking.provider_type === 'paid' ? 'Paid collaboration' : 'Cross-promotion';
 
   return (
-    <Card className="h-100">
+    <Card className="h-100 mb-3">
       <div className="card-body d-flex flex-column">
         <div className="mb-2 d-flex justify-content-between align-items-start gap-2">
           <div>
@@ -41,6 +70,49 @@ export function BookingCard({ booking }: BookingCardProps) {
             {providerLabel}
           </Badge>
         </div>
+
+        <BookingScheduleProgress
+          daysRemaining={booking.days_remaining}
+          scheduleProgressPercent={booking.schedule_progress_percent}
+          periodEndsAt={booking.period_ends_at}
+        />
+
+        <BookingDeliverables deliverables={booking.deliverables} />
+
+        <div className="mb-3">
+          <h6 className="small fw-semibold mb-2">Proof of execution</h6>
+          <div className="d-flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              disabled
+              title="Coming soon"
+            >
+              Request proof (you)
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              disabled
+              title="Coming soon"
+            >
+              Request proof (partner)
+            </button>
+          </div>
+          <small className="text-muted d-block mt-1">Proof requests will be available soon.</small>
+        </div>
+
+        {reviewError && (
+          <div className="alert alert-danger py-2 small mb-2">{reviewError}</div>
+        )}
+
+        <BookingReviewForm
+          collaborationId={booking.collaboration_id}
+          myReview={booking.my_review}
+          canSubmitReview={booking.can_submit_review}
+          onSubmit={handleSubmitReview}
+          loading={reviewLoading}
+        />
 
         <div className="mt-auto pt-3 border-top d-flex flex-column flex-sm-row gap-2">
           <button
@@ -64,4 +136,3 @@ export function BookingCard({ booking }: BookingCardProps) {
     </Card>
   );
 }
-

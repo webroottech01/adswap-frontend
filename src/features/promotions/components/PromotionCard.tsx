@@ -1,7 +1,12 @@
 'use client';
 
 import { Pause, Pencil, Play, Trash2 } from 'lucide-react';
-import type { Promotion } from '../types';
+import {
+  crossTypeLabel,
+  paidDurationLabel,
+  paidPlacementLabel,
+} from '../constants';
+import type { CrossPromotionDetails, PaidPromotionDetails, Promotion } from '../types';
 import { resolvePromotionMediaUrl } from '../utils/mediaUrl';
 
 interface PromotionCardProps {
@@ -24,6 +29,14 @@ function statusBadgeClass(status: Promotion['status']): string {
   }
 }
 
+function formatPrice(details: PaidPromotionDetails): string {
+  const price = details.price;
+  if (!price) return '—';
+  if (price.is_custom_quote) return 'Custom quote';
+  if (price.amount != null) return `₹${price.amount}`;
+  return '—';
+}
+
 export function PromotionCard({
   promotion,
   actionLoading = false,
@@ -38,14 +51,53 @@ export function PromotionCard({
     }
   };
 
+  const summary =
+    promotion.category === 'paid' ? (
+      <p className="text-muted small mb-3">
+        <strong>{paidPlacementLabel((promotion.details as PaidPromotionDetails).placement_type)}</strong>
+        {' · '}
+        {formatPrice(promotion.details as PaidPromotionDetails)}
+        {' · '}
+        {paidDurationLabel(
+          (promotion.details as PaidPromotionDetails).duration?.unit,
+          (promotion.details as PaidPromotionDetails).duration?.value,
+        )}
+      </p>
+    ) : (
+      <p className="text-muted small mb-3">
+        <strong>{crossTypeLabel((promotion.details as CrossPromotionDetails).promotion_type)}</strong>
+        {(promotion.details as CrossPromotionDetails).target_partner_category && (
+          <>
+            {' · '}
+            {(promotion.details as CrossPromotionDetails).target_partner_category}
+          </>
+        )}
+        {promotion.description && (
+          <>
+            <br />
+            <span className="fst-italic">{promotion.description}</span>
+          </>
+        )}
+        {(promotion.details as CrossPromotionDetails).notes && !promotion.description && (
+          <>
+            <br />
+            <span className="fst-italic">{(promotion.details as CrossPromotionDetails).notes}</span>
+          </>
+        )}
+      </p>
+    );
+
   return (
     <div className="card mb-3">
       <div className="card-body">
         <div className="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
           <div>
             <h5 className="card-title mb-1">{promotion.title}</h5>
-            <span className={`badge ${statusBadgeClass(promotion.status)}`}>
+            <span className={`badge ${statusBadgeClass(promotion.status)} me-1`}>
               {promotion.status}
+            </span>
+            <span className="badge bg-light text-dark border">
+              {promotion.category === 'paid' ? 'Paid' : 'Cross'}
             </span>
           </div>
           <div className="d-flex flex-wrap gap-2">
@@ -93,9 +145,7 @@ export function PromotionCard({
           </div>
         </div>
 
-        {promotion.description && (
-          <p className="text-muted small mb-3">{promotion.description}</p>
-        )}
+        {summary}
 
         {promotion.media.length > 0 ? (
           <div className="row g-2">

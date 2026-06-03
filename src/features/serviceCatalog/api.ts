@@ -90,6 +90,15 @@ export const serviceCatalogApi = {
     return response.data;
   },
 
+  async updateCategory(id: number, data: UpdateServiceCategoryData): Promise<ServiceCategory> {
+    const response = await api.put<ServiceCategory>(`/api/v1/admin/service-categories/${id}`, data);
+    return response.data;
+  },
+
+  async deleteCategory(id: number): Promise<void> {
+    await api.delete(`/api/v1/admin/service-categories/${id}`);
+  },
+
   /**
    * Get all services
    */
