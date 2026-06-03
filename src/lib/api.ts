@@ -1,4 +1,9 @@
+import './api.types';
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+
+function shouldUseGlobalLoading(config?: { skipGlobalLoading?: boolean }): boolean {
+  return !config?.skipGlobalLoading;
+}
 
 // Global loading state management
 let loadingCount = 0;
@@ -74,13 +79,14 @@ class ApiClient {
           if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
           }
-          // Show global loading indicator
-          incrementLoading();
+          if (shouldUseGlobalLoading(config)) {
+            incrementLoading();
+          }
         }
         return config;
       },
       (error) => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && shouldUseGlobalLoading(error.config)) {
           decrementLoading();
         }
         return Promise.reject(error);
@@ -90,13 +96,13 @@ class ApiClient {
     // Response interceptor - handle global errors and hide loading
     this.client.interceptors.response.use(
       (response) => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && shouldUseGlobalLoading(response.config)) {
           decrementLoading();
         }
         return response;
       },
       (error: AxiosError<ApiError>) => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && shouldUseGlobalLoading(error.config)) {
           decrementLoading();
         }
         this.handleError(error);
@@ -230,6 +236,7 @@ class ApiClient {
   public async postMultipart<T = any>(url: string, formData: FormData, config?: any): Promise<ApiResponse<T>> {
     const response = await this.client.post<T>(url, formData, {
       ...config,
+      skipGlobalLoading: config?.skipGlobalLoading ?? false,
       headers: {
         ...config?.headers,
         'Content-Type': undefined,

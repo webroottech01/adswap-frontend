@@ -74,6 +74,7 @@ export interface Promotion {
   business_id: number;
   category: PromotionCategory;
   title: string;
+  slug: string;
   description: string | null;
   details: CrossPromotionDetails | PaidPromotionDetails;
   status: PromotionStatus;

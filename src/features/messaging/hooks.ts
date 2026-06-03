@@ -1,47 +1,53 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { messagingApi } from './api';
 import type {
   ConversationDetailResponse,
   ConversationListItem,
   ConversationsMeta,
   Message,
+  SendMessagePayload,
 } from './types';
 
 export function useConversations(initialPage = 1, initialPerPage = 15) {
   const [data, setData] = useState<ConversationListItem[]>([]);
   const [meta, setMeta] = useState<ConversationsMeta | null>(null);
-  const [page, setPage] = useState(initialPage);
+  const pageRef = useRef(initialPage);
   const [perPage] = useState(initialPerPage);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inflightRef = useRef(false);
 
-  const refetch = useCallback(
-    async (nextPage?: number) => {
-      const targetPage = nextPage ?? page;
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await messagingApi.getConversations(targetPage, perPage);
-        setData(response.data);
-        setMeta(response.meta);
-        setPage(targetPage);
-      } catch (err: unknown) {
-        const message =
-          err && typeof err === 'object' && 'response' in err
-            ? (err as { response?: { data?: { message?: string } } }).response?.data?.message ||
-              'Failed to load conversations'
-            : 'Failed to load conversations';
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [page, perPage],
-  );
+  const refetch = useCallback(async (nextPage?: number) => {
+    const targetPage = nextPage ?? pageRef.current;
+    if (inflightRef.current) {
+      return;
+    }
 
-  return { data, meta, page, perPage, loading, error, refetch };
+    inflightRef.current = true;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await messagingApi.getConversations(targetPage, perPage);
+      const items = Array.isArray(response?.data) ? response.data : [];
+      setData(items);
+      setMeta(response.meta ?? null);
+      pageRef.current = targetPage;
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            'Failed to load conversations'
+          : 'Failed to load conversations';
+      setError(message);
+    } finally {
+      setLoading(false);
+      inflightRef.current = false;
+    }
+  }, [perPage]);
+
+  return { data, meta, page: pageRef.current, perPage, loading, error, refetch };
 }
 
 export function useConversationDetail(
@@ -50,22 +56,36 @@ export function useConversationDetail(
   initialPerPage = 20,
 ) {
   const [data, setData] = useState<ConversationDetailResponse | null>(null);
-  const [page, setPage] = useState(initialPage);
+  const pageRef = useRef(initialPage);
   const [perPage] = useState(initialPerPage);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inflightRef = useRef(false);
 
-  const refetch = useCallback(
-    async (nextPage?: number) => {
-      const targetPage = nextPage ?? page;
-      if (!conversationId) return;
+  const fetchDetail = useCallback(
+    async (targetPage: number, options?: { clearMessages?: boolean }) => {
+      if (!conversationId || conversationId < 1) {
+        return;
+      }
+      if (inflightRef.current) {
+        return;
+      }
 
+      inflightRef.current = true;
+      if (options?.clearMessages) {
+        setData(null);
+      }
       setLoading(true);
       setError(null);
+
       try {
-        const response = await messagingApi.getConversation(conversationId, targetPage, perPage);
+        const response = await messagingApi.getConversation(
+          conversationId,
+          targetPage,
+          perPage,
+        );
         setData(response);
-        setPage(targetPage);
+        pageRef.current = targetPage;
       } catch (err: unknown) {
         const message =
           err && typeof err === 'object' && 'response' in err
@@ -73,14 +93,42 @@ export function useConversationDetail(
               'Failed to load messages'
             : 'Failed to load messages';
         setError(message);
+        if (options?.clearMessages) {
+          setData(null);
+        }
       } finally {
         setLoading(false);
+        inflightRef.current = false;
       }
     },
-    [conversationId, page, perPage],
+    [conversationId, perPage],
   );
 
-  return { data, page, perPage, loading, error, refetch };
+  useEffect(() => {
+    if (!conversationId || conversationId < 1) {
+      setData(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    void fetchDetail(1, { clearMessages: true });
+
+    return () => {
+      inflightRef.current = false;
+    };
+  }, [conversationId, fetchDetail]);
+
+  const refetch = useCallback(
+    async (nextPage?: number) => {
+      const targetPage = nextPage ?? pageRef.current;
+      const hasMessages = (data?.messages?.length ?? 0) > 0;
+      await fetchDetail(targetPage, { clearMessages: !hasMessages });
+    },
+    [data?.messages?.length, fetchDetail],
+  );
+
+  return { data, page: pageRef.current, perPage, loading, error, refetch };
 }
 
 export function useSendMessage(options?: {
@@ -91,12 +139,17 @@ export function useSendMessage(options?: {
   const [error, setError] = useState<string | null>(null);
 
   const send = useCallback(
-    async (conversationId: number, messageText: string) => {
-      if (!messageText.trim()) return;
+    async (conversationId: number, payload: SendMessagePayload) => {
+      const text = payload.text?.trim() ?? '';
+      const files = payload.files ?? [];
+      if (!text && files.length === 0) {
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
-        const message = await messagingApi.sendMessage(conversationId, messageText);
+        const message = await messagingApi.sendMessage(conversationId, { text, files });
         options?.onSuccess?.(message);
       } catch (err: unknown) {
         const message =
@@ -115,4 +168,3 @@ export function useSendMessage(options?: {
 
   return { send, loading, error, clearError: () => setError(null) };
 }
-

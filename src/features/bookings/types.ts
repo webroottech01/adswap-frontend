@@ -1,3 +1,5 @@
+import type { Promotion } from '@/features/promotions/types';
+
 export type ProviderType = 'paid' | 'cross';
 
 export interface BookingServiceItem {
@@ -34,6 +36,11 @@ export interface Booking {
   deliverables: BookingDeliverables;
   my_review: BookingReview | null;
   can_submit_review: boolean;
+  promotion_category?: 'cross' | 'paid' | null;
+  target_promotion?: Promotion | null;
+  collaboration_message?: string | null;
+  offered_price?: number | null;
+  offered_price_is_custom?: boolean | null;
 }
 
 export interface BookingFilters {

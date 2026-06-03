@@ -6,16 +6,14 @@ import { MarketplaceFilters } from '@/features/marketplace/components/Marketplac
 import { MarketplaceGrid } from '@/features/marketplace/components/MarketplaceGrid';
 import { useAuthSession } from '@/features/auth/public';
 import { CollaborationModal, useSendRequest } from '@/features/collaboration';
-import type { MarketplaceListing } from '@/features/marketplace/types';
+import type { MarketplaceCollaborationTarget } from '@/features/marketplace/types';
+import type { SendCollaborationPayload } from '@/features/collaboration/types';
 import { businessApi } from '@/features/business/api';
 
-/**
- * Marketplace Page
- * Discover approved ad providers with filtering and pagination
- */
 export default function MarketplacePage() {
   const { isAuthenticated } = useAuthSession();
-  const [collaborationTarget, setCollaborationTarget] = useState<MarketplaceListing | null>(null);
+  const [collaborationTarget, setCollaborationTarget] =
+    useState<MarketplaceCollaborationTarget | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [collaborationError, setCollaborationError] = useState<string | null>(null);
   const [myBusinessId, setMyBusinessId] = useState<number | null>(null);
@@ -28,13 +26,6 @@ export default function MarketplacePage() {
     setPage,
   } = useMarketplaceFilters();
 
-  const {
-    listings,
-    loading,
-    error,
-    pagination,
-  } = useMarketplace(filters);
-
   useEffect(() => {
     if (!isAuthenticated) {
       setMyBusinessId(null);
@@ -46,9 +37,7 @@ export default function MarketplacePage() {
       try {
         const myBusiness = await businessApi.getMyBusiness();
         if (!cancelled) setMyBusinessId(myBusiness.id);
-      } catch (err: any) {
-        // If user doesn't have a business yet (404), keep current behavior:
-        // Collaborate button remains visible (myBusinessId stays null).
+      } catch {
         if (!cancelled) setMyBusinessId(null);
       }
     })();
@@ -57,6 +46,13 @@ export default function MarketplacePage() {
       cancelled = true;
     };
   }, [isAuthenticated]);
+
+  const { listings: rawListings, loading, error, pagination } = useMarketplace(filters);
+
+  const listings =
+    myBusinessId != null
+      ? rawListings.filter((listing) => listing.id !== myBusinessId)
+      : rawListings;
 
   const {
     send,
@@ -78,23 +74,22 @@ export default function MarketplacePage() {
     setPage(page);
   };
 
-  const handleCollaborateClick = (listing: MarketplaceListing) => {
-    setCollaborationTarget(listing);
+  const handleCollaborateClick = (target: MarketplaceCollaborationTarget) => {
+    setCollaborationTarget(target);
     setSuccessMessage(null);
     setCollaborationError(null);
     clearError();
   };
 
-  const handleCollaborationSubmit = async (message: string) => {
-    if (!collaborationTarget) return;
-    await send(collaborationTarget.id, message);
+  const handleCollaborationSubmit = async (payload: SendCollaborationPayload) => {
+    return send(payload);
   };
 
   return (
     <div className="container-fluid py-4">
       <div className="mb-4">
         <h1 className="h3 mb-1">Marketplace</h1>
-        <p className="text-muted mb-0">Discover approved ad providers</p>
+        <p className="text-muted mb-0">Discover published promotion opportunities from providers</p>
       </div>
 
       {successMessage && (
@@ -121,20 +116,13 @@ export default function MarketplacePage() {
         </div>
       )}
 
-      {/* Error Message */}
       {error && (
         <div className="alert alert-danger alert-dismissible fade show" role="alert">
           {error}
-          <button
-            type="button"
-            className="btn-close"
-            onClick={() => {}}
-            aria-label="Close"
-          />
+          <button type="button" className="btn-close" onClick={() => {}} aria-label="Close" />
         </div>
       )}
 
-      {/* Filters */}
       <MarketplaceFilters
         filters={filters}
         metadata={metadata}
@@ -142,7 +130,6 @@ export default function MarketplacePage() {
         onFiltersChange={updateFilters}
       />
 
-      {/* Listings Grid */}
       <MarketplaceGrid
         listings={listings}
         loading={loading}
@@ -153,12 +140,13 @@ export default function MarketplacePage() {
         onCollaborateClick={handleCollaborateClick}
       />
 
-      {collaborationTarget && (
+      {collaborationTarget != null && (
         <CollaborationModal
-          show={!!collaborationTarget}
+          show
           onHide={() => setCollaborationTarget(null)}
-          receiverBusinessId={collaborationTarget.id}
-          receiverBusinessName={collaborationTarget.name}
+          receiverBusinessId={collaborationTarget.businessId}
+          receiverBusinessName={collaborationTarget.businessName}
+          targetPromotion={collaborationTarget.promotion}
           onSubmit={handleCollaborationSubmit}
           loading={sendLoading}
           error={sendError}

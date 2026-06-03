@@ -41,7 +41,12 @@ export function useBookings(initialFilters: BookingFilters = {}) {
       try {
         const response: PaginatedResponse<Booking> = await bookingsApi.getBookings(nextFilters);
 
-        setData(Array.isArray(response.data) ? response.data : []);
+        const items = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+        setData(items);
         setPagination({
           current_page: response.current_page || 1,
           last_page: response.last_page || 1,

@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { MessageSquare } from 'lucide-react';
 import type { CollaborationRequest } from '../types';
+import { PromotionContentPreview } from '@/features/promotions/components/PromotionContentPreview';
+import { PromotionValidityBar } from '@/features/marketplace/components/PromotionValidityBar';
+import { promotionCategoryLabel } from '@/features/promotions/constants';
 import { Badge } from '@/ui/Badge';
 
 interface CollaborationRequestCardProps {
@@ -27,6 +30,10 @@ function statusVariant(status: string): 'secondary' | 'success' | 'danger' {
   }
 }
 
+function categoryBadgeVariant(category: string | null | undefined): 'success' | 'warning' {
+  return category === 'paid' ? 'warning' : 'success';
+}
+
 export function CollaborationRequestCard({
   request,
   variant,
@@ -44,6 +51,9 @@ export function CollaborationRequestCard({
     (request.status === 'pending' || request.status === 'accepted') &&
     request.conversation_id != null;
   const negotiateLoading = negotiateLoadingId === request.id;
+  const categoryLabel = request.promotion_category
+    ? promotionCategoryLabel(request.promotion_category)
+    : null;
 
   return (
     <div className="card mb-3">
@@ -56,6 +66,11 @@ export function CollaborationRequestCard({
             </h6>
             <div className="d-flex flex-wrap gap-2 align-items-center">
               <Badge variant={statusVariant(request.status)}>{request.status}</Badge>
+              {categoryLabel && (
+                <Badge variant={categoryBadgeVariant(request.promotion_category)}>
+                  {categoryLabel}
+                </Badge>
+              )}
               {request.marked_negotiating && (
                 <Badge variant="secondary">Your negotiate reminder</Badge>
               )}
@@ -65,8 +80,44 @@ export function CollaborationRequestCard({
             {new Date(request.created_at).toLocaleDateString()}
           </small>
         </div>
-        {request.message && (
-          <p className="card-text mt-2 mb-0 text-muted small">{request.message}</p>
+
+        {request.target_promotion && (
+          <div className="mt-3">
+            <p className="small text-muted text-uppercase mb-2">Collaborating on</p>
+            <PromotionValidityBar promotion={request.target_promotion} />
+            <div className="mt-2">
+              <PromotionContentPreview promotion={request.target_promotion} compact showTitle />
+            </div>
+          </div>
+        )}
+
+        {request.sender_promotion && (
+          <div className="mt-3">
+            <p className="small text-muted mb-2">
+              <strong>{variant === 'received' ? 'Their offer' : 'Your offer'}:</strong>
+            </p>
+            <PromotionContentPreview promotion={request.sender_promotion} compact />
+          </div>
+        )}
+        {!request.sender_promotion && request.promotion_category === 'cross' && request.sender_offer && (
+          <p className="card-text mt-2 mb-0 small">
+            <strong>Offer:</strong> {request.sender_offer}
+          </p>
+        )}
+        {request.promotion_category === 'paid' && (
+          <p className="card-text mt-2 mb-0 small">
+            <strong>Offered price:</strong>{' '}
+            {request.offered_price_is_custom
+              ? 'Custom quote'
+              : request.offered_price != null
+                ? `₹${request.offered_price}`
+                : '—'}
+          </p>
+        )}
+        {request.message?.trim() && (
+          <p className="card-text mt-2 mb-0 text-muted small">
+            <strong>Additional note / requirements:</strong> {request.message}
+          </p>
         )}
         <div className="mt-3 d-flex flex-wrap gap-2">
           {showActions && (
