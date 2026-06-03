@@ -101,6 +101,15 @@ export const serviceCatalogApi = {
   },
 
   /**
+   * Get enabled services for app users (non-admin).
+   */
+  async getEnabledServices(): Promise<Service[]> {
+    const response = await api.get<Service[]>('/api/v1/services');
+    const data = Array.isArray(response.data) ? response.data : (response.data as any)?.data || [];
+    return Array.isArray(data) ? data : [];
+  },
+
+  /**
    * Create a new service
    */
   async createService(data: CreateServiceData): Promise<Service> {

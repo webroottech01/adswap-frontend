@@ -20,48 +20,27 @@ export function Step3CollaborationPreference({ form }: Step3CollaborationPrefere
     formState: { errors },
   } = form;
 
-  const { enabledServices, loading: servicesLoading, error: servicesError, getServicesByCategory } = useServices();
+  const { enabledServices, loading: servicesLoading, error: servicesError } = useServices();
 
   const providesAdServices = watch('providesAdServices');
   const isBuyer = watch('isBuyer');
-  const paidPromotion = watch('paidPromotion');
-  const crossMarketing = watch('crossMarketing');
-  const paidPromotionTypes = watch('paidPromotionTypes') || [];
-  const crossMarketingTypes = watch('crossMarketingTypes') || [];
+  const serviceSlugs = watch('serviceSlugs') || [];
 
-  // Get services by category
-  const paidPromotionServices = getServicesByCategory('Paid Promotion');
-  const crossMarketingServices = getServicesByCategory('Cross Marketing');
+  const groupedByCategory = enabledServices.reduce<Record<string, Service[]>>((acc, service) => {
+    const key = service.category_name || 'Other';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(service);
+    return acc;
+  }, {});
 
-  const handlePaidPromotionChange = (checked: boolean) => {
-    setValue('paidPromotion', checked);
-    if (!checked) {
-      setValue('paidPromotionTypes', []);
-    }
-  };
+  const categories = Object.keys(groupedByCategory).sort((a, b) => a.localeCompare(b));
 
-  const handleCrossMarketingChange = (checked: boolean) => {
-    setValue('crossMarketing', checked);
-    if (!checked) {
-      setValue('crossMarketingTypes', []);
-    }
-  };
-
-  const handlePaidPromotionTypeChange = (serviceSlug: string, checked: boolean) => {
-    const current = paidPromotionTypes || [];
+  const handleServiceToggle = (slug: string, checked: boolean) => {
+    const current = serviceSlugs || [];
     if (checked) {
-      setValue('paidPromotionTypes', [...current, serviceSlug]);
+      setValue('serviceSlugs', [...current, slug]);
     } else {
-      setValue('paidPromotionTypes', current.filter((t) => t !== serviceSlug));
-    }
-  };
-
-  const handleCrossMarketingTypeChange = (serviceSlug: string, checked: boolean) => {
-    const current = crossMarketingTypes || [];
-    if (checked) {
-      setValue('crossMarketingTypes', [...current, serviceSlug]);
-    } else {
-      setValue('crossMarketingTypes', current.filter((t) => t !== serviceSlug));
+      setValue('serviceSlugs', current.filter((t) => t !== slug));
     }
   };
 
@@ -79,7 +58,13 @@ export function Step3CollaborationPreference({ form }: Step3CollaborationPrefere
               id="providesAdServices"
               checked={providesAdServices ?? false}
               {...register('providesAdServices', { value: providesAdServices ?? false })}
-              onChange={(e) => setValue('providesAdServices', e.target.checked)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setValue('providesAdServices', checked);
+                if (!checked) {
+                  setValue('serviceSlugs', []);
+                }
+              }}
             />
             <label className="form-check-label" htmlFor="providesAdServices">
               <strong>Do you want to provide advertising services? <span className="text-danger">*</span></strong>
@@ -111,95 +96,38 @@ export function Step3CollaborationPreference({ form }: Step3CollaborationPrefere
 
         {providesAdServices && (
           <div className="border-top pt-4">
-            <div className="mb-4">
-              <div className="form-check mb-3">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="paidPromotion"
-                  checked={paidPromotion || false}
-                  onChange={(e) => handlePaidPromotionChange(e.target.checked)}
-                />
-                <label className="form-check-label" htmlFor="paidPromotion">
-                  <strong>Paid Promotion</strong>
-                </label>
-              </div>
-
-              {paidPromotion && (
-                <div className="ms-4">
-                  <label className="form-label small">Select promotion types:</label>
-                  {servicesLoading ? (
-                    <div className="text-muted small">Loading services...</div>
-                  ) : servicesError ? (
-                    <div className="text-danger small">{servicesError}</div>
-                  ) : paidPromotionServices.length === 0 ? (
-                    <div className="text-muted small">No paid promotion services available</div>
-                  ) : (
+            <label className="form-label small mb-3">Select service types:</label>
+            {servicesLoading ? (
+              <div className="text-muted small">Loading services...</div>
+            ) : servicesError ? (
+              <div className="text-danger small">{servicesError}</div>
+            ) : categories.length === 0 ? (
+              <div className="text-muted small">No services available</div>
+            ) : (
+              <div className="d-flex flex-column gap-3">
+                {categories.map((category) => (
+                  <div key={category} className="border rounded p-3 bg-light bg-opacity-25">
+                    <div className="fw-semibold mb-2">{category}</div>
                     <div className="d-flex flex-column gap-2">
-                      {paidPromotionServices.map((service: Service) => (
+                      {groupedByCategory[category].map((service) => (
                         <div key={service.id} className="form-check">
                           <input
                             className="form-check-input"
                             type="checkbox"
-                            id={`paidPromotion-${service.slug}`}
-                            checked={paidPromotionTypes.includes(service.slug)}
-                            onChange={(e) => handlePaidPromotionTypeChange(service.slug, e.target.checked)}
+                            id={`service-${service.slug}`}
+                            checked={serviceSlugs.includes(service.slug)}
+                            onChange={(e) => handleServiceToggle(service.slug, e.target.checked)}
                           />
-                          <label className="form-check-label" htmlFor={`paidPromotion-${service.slug}`}>
+                          <label className="form-check-label" htmlFor={`service-${service.slug}`}>
                             {service.name}
                           </label>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div className="form-check mb-3">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="crossMarketing"
-                  checked={crossMarketing || false}
-                  onChange={(e) => handleCrossMarketingChange(e.target.checked)}
-                />
-                <label className="form-check-label" htmlFor="crossMarketing">
-                  <strong>Cross Marketing</strong>
-                </label>
+                  </div>
+                ))}
               </div>
-
-              {crossMarketing && (
-                <div className="ms-4">
-                  <label className="form-label small">Select marketing types:</label>
-                  {servicesLoading ? (
-                    <div className="text-muted small">Loading services...</div>
-                  ) : servicesError ? (
-                    <div className="text-danger small">{servicesError}</div>
-                  ) : crossMarketingServices.length === 0 ? (
-                    <div className="text-muted small">No cross marketing services available</div>
-                  ) : (
-                    <div className="d-flex flex-column gap-2">
-                      {crossMarketingServices.map((service: Service) => (
-                        <div key={service.id} className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id={`crossMarketing-${service.slug}`}
-                            checked={crossMarketingTypes.includes(service.slug)}
-                            onChange={(e) => handleCrossMarketingTypeChange(service.slug, e.target.checked)}
-                          />
-                          <label className="form-check-label" htmlFor={`crossMarketing-${service.slug}`}>
-                            {service.name}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
       </div>

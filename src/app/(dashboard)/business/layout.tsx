@@ -16,16 +16,18 @@ export default function BusinessDashboardLayout({
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthSession();
   const isBusinessOwner = user?.roles?.includes('business_owner') ?? false;
+  const isSuperAdmin = user?.roles?.includes('super_admin') ?? false;
+  const canAccessBusiness = isBusinessOwner || isSuperAdmin;
 
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) return;
-    if (!isBusinessOwner) {
+    if (!canAccessBusiness) {
       router.replace('/dashboard');
     }
-  }, [isAuthenticated, isLoading, isBusinessOwner, router]);
+  }, [isAuthenticated, isLoading, canAccessBusiness, router]);
 
-  if (isLoading || (isAuthenticated && !isBusinessOwner)) {
+  if (isLoading || (isAuthenticated && !canAccessBusiness)) {
     return null;
   }
 

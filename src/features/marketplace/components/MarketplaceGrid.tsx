@@ -14,6 +14,7 @@ interface MarketplaceGridProps {
   };
   onPageChange: (page: number) => void;
   isAuthenticated?: boolean;
+  myBusinessId?: number | null;
   onCollaborateClick?: (listing: MarketplaceListing) => void;
 }
 
@@ -27,6 +28,7 @@ export function MarketplaceGrid({
   pagination,
   onPageChange,
   isAuthenticated,
+  myBusinessId,
   onCollaborateClick,
 }: MarketplaceGridProps) {
   if (loading && listings.length === 0) {
@@ -64,6 +66,7 @@ export function MarketplaceGrid({
             <MarketplaceCard
               listing={listing}
               isAuthenticated={isAuthenticated}
+              myBusinessId={myBusinessId}
               onCollaborateClick={onCollaborateClick}
             />
           </div>

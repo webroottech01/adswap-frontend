@@ -1,9 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { DataTable, DataTableColumn } from '@/shared/DataTable';
 import { Business } from '../types';
 import { BusinessStatusBadge } from './BusinessStatusBadge';
 import { Button } from '@/ui/Button';
-import { Edit, CheckCircle, XCircle, Ban } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, Ban } from 'lucide-react';
 
 interface BusinessListProps {
   businesses: Business[];
@@ -26,6 +29,8 @@ export function BusinessList({
   onSuspend,
   actionLoading = null,
 }: BusinessListProps) {
+  const router = useRouter();
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -88,8 +93,8 @@ export function BusinessList({
     return (
       <div className="d-flex gap-2 flex-wrap">
         <Link href={`/admin/businesses/${business.id}`}>
-          <Button variant="primary" outline size="sm" title="Edit" icon={Edit}>
-            Edit
+          <Button variant="primary" outline size="sm" title="View" icon={Eye}>
+            View
           </Button>
         </Link>
         {business.status === 'pending' && onApprove && (
@@ -169,7 +174,7 @@ export function BusinessList({
       emptyMessage="No businesses found"
       actions={actions}
       onRowClick={(business) => {
-        window.location.href = `/admin/businesses/${business.id}`;
+        router.push(`/admin/businesses/${business.id}`);
       }}
     />
   );

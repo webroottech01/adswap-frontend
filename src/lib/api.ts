@@ -226,6 +226,24 @@ class ApiClient {
       success: (response.data as any)?.success,
     };
   }
+
+  public async postMultipart<T = any>(url: string, formData: FormData, config?: any): Promise<ApiResponse<T>> {
+    const response = await this.client.post<T>(url, formData, {
+      ...config,
+      headers: {
+        ...config?.headers,
+        'Content-Type': undefined,
+      },
+    });
+    const responseData = (response.data as any)?.data ?? response.data;
+    return {
+      data: responseData as T,
+      status: response.status,
+      statusText: response.statusText,
+      message: (response.data as any)?.message,
+      success: (response.data as any)?.success,
+    };
+  }
 }
 
 // Export singleton instance

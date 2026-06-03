@@ -4,34 +4,13 @@ import { Service } from '@/features/serviceCatalog/api';
 
 /**
  * Map service type strings to service IDs
- * Maps frontend service type strings (like 'hoardings', 'coupons') to backend service IDs
+ * Maps frontend service slugs (like 'hoardings', 'coupons') to backend service IDs
  */
-export function mapServiceTypesToIds(
-  paidPromotionTypes: string[] = [],
-  crossMarketingTypes: string[] = [],
-  services: Service[]
-): number[] {
+export function mapServiceSlugsToIds(serviceSlugs: string[] = [], services: Service[]): number[] {
   const serviceIds: number[] = [];
 
-  // Map paid promotion types
-  paidPromotionTypes.forEach((type) => {
-    const service = services.find(
-      (s) =>
-        s.category_name.toLowerCase() === 'paid promotion' &&
-        (s.slug === type || s.name.toLowerCase() === type.toLowerCase())
-    );
-    if (service) {
-      serviceIds.push(service.id);
-    }
-  });
-
-  // Map cross marketing types
-  crossMarketingTypes.forEach((type) => {
-    const service = services.find(
-      (s) =>
-        s.category_name.toLowerCase() === 'cross marketing' &&
-        (s.slug === type || s.name.toLowerCase() === type.toLowerCase())
-    );
+  serviceSlugs.forEach((slug) => {
+    const service = services.find((s) => s.slug === slug);
     if (service) {
       serviceIds.push(service.id);
     }
@@ -44,28 +23,17 @@ export function mapServiceTypesToIds(
  * Map service IDs back to service type strings
  * Used when loading existing business data into the form
  */
-export function mapServiceIdsToTypes(
-  serviceIds: number[],
-  services: Service[]
-): {
-  paidPromotionTypes: string[];
-  crossMarketingTypes: string[];
-} {
-  const paidPromotionTypes: string[] = [];
-  const crossMarketingTypes: string[] = [];
+export function mapServiceIdsToSlugs(serviceIds: number[], services: Service[]): string[] {
+  const slugs: string[] = [];
 
   serviceIds.forEach((id) => {
     const service = services.find((s) => s.id === id);
     if (service) {
-      if (service.category_name.toLowerCase() === 'paid promotion') {
-        paidPromotionTypes.push(service.slug);
-      } else if (service.category_name.toLowerCase() === 'cross marketing') {
-        crossMarketingTypes.push(service.slug);
-      }
+      slugs.push(service.slug);
     }
   });
 
-  return { paidPromotionTypes, crossMarketingTypes };
+  return slugs;
 }
 
 /**
@@ -76,11 +44,7 @@ export function transformFormToCreateData(
   services: Service[] = []
 ): CreateBusinessData {
   // Map service types to IDs
-  const serviceIds = mapServiceTypesToIds(
-    formData.paidPromotionTypes || [],
-    formData.crossMarketingTypes || [],
-    services
-  );
+  const serviceIds = mapServiceSlugsToIds(formData.serviceSlugs || [], services);
 
   const result: CreateBusinessData = {
     // Step 1: Basic Account Info (required)
@@ -153,10 +117,7 @@ export function transformBusinessToFormData(
   business: Business,
   services: Service[] = []
 ): Partial<BusinessFormData> {
-  const { paidPromotionTypes, crossMarketingTypes } = mapServiceIdsToTypes(
-    business.service_ids || [],
-    services
-  );
+  const serviceSlugs = mapServiceIdsToSlugs(business.service_ids || [], services);
 
   return {
     // Step 1
@@ -171,10 +132,7 @@ export function transformBusinessToFormData(
     // Step 3
     providesAdServices: business.is_provider,
     isBuyer: business.is_buyer,
-    paidPromotion: paidPromotionTypes.length > 0,
-    paidPromotionTypes: paidPromotionTypes.length > 0 ? paidPromotionTypes : undefined,
-    crossMarketing: crossMarketingTypes.length > 0,
-    crossMarketingTypes: crossMarketingTypes.length > 0 ? crossMarketingTypes : undefined,
+    serviceSlugs: serviceSlugs.length > 0 ? serviceSlugs : undefined,
     collaborationPreferences: (business as any).collaboration_preferences || undefined,
     // Step 4
     scale: (business as any).profile?.scale || undefined,

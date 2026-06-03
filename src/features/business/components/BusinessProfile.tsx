@@ -9,13 +9,97 @@ import { Edit, AlertCircle, XCircle, Ban, Building2, MapPin, Briefcase, Users, T
 interface BusinessProfileProps {
   business: Business;
   onEdit?: () => void;
+  title?: string;
+  showStatusMessage?: boolean;
+}
+
+function formatCollaborationLabel(value: string): string {
+  return value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function CollaborationPreferencesDisplay({
+  preferences,
+}: {
+  preferences: Record<string, unknown>;
+}) {
+  const {
+    preferred_collaboration_types,
+    budget_range,
+    collaboration_notes,
+    ...rest
+  } = preferences;
+
+  const types = Array.isArray(preferred_collaboration_types)
+    ? preferred_collaboration_types
+    : [];
+
+  const otherEntries = Object.entries(rest).filter(
+    ([, value]) =>
+      value !== null &&
+      value !== undefined &&
+      value !== '' &&
+      !(Array.isArray(value) && value.length === 0)
+  );
+
+  return (
+    <div className="row">
+      {types.length > 0 && (
+        <div className="col-12 mb-3">
+          <label className="form-label text-muted small">Preferred Collaboration Types</label>
+          <div className="d-flex flex-wrap gap-2">
+            {types.map((type, index) => (
+              <span key={index} className="badge bg-success">
+                {formatCollaborationLabel(String(type))}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {budget_range != null && budget_range !== '' && (
+        <div className="col-md-6 mb-3">
+          <label className="form-label text-muted small">Budget Range</label>
+          <p className="mb-0">{String(budget_range)}</p>
+        </div>
+      )}
+      {collaboration_notes != null && collaboration_notes !== '' && (
+        <div className="col-12 mb-3">
+          <label className="form-label text-muted small">Collaboration Notes</label>
+          <p className="mb-0">{String(collaboration_notes)}</p>
+        </div>
+      )}
+      {otherEntries.map(([key, value]) => (
+        <div key={key} className="col-md-6 mb-3">
+          <label className="form-label text-muted small">{formatCollaborationLabel(key)}</label>
+          {Array.isArray(value) ? (
+            <div className="d-flex flex-wrap gap-2">
+              {value.map((item, index) => (
+                <span key={index} className="badge bg-secondary">
+                  {formatCollaborationLabel(String(item))}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-0">{String(value)}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /**
  * Business Profile Component
  * Displays business information step-wise matching the 8-step form structure
  */
-export function BusinessProfile({ business, onEdit }: BusinessProfileProps) {
+export function BusinessProfile({
+  business,
+  onEdit,
+  title = 'My Business',
+  showStatusMessage = true,
+}: BusinessProfileProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -98,7 +182,7 @@ export function BusinessProfile({ business, onEdit }: BusinessProfileProps) {
         <div className="col-12">
           {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <h3 className="mb-0">My Business</h3>
+            <h3 className="mb-0">{title}</h3>
             {onEdit && (
               <Button variant="primary" outline size="sm" icon={Edit} onClick={onEdit}>
                 Edit Profile
@@ -107,7 +191,7 @@ export function BusinessProfile({ business, onEdit }: BusinessProfileProps) {
           </div>
 
           {/* Status Message */}
-          {renderStatusMessage()}
+          {showStatusMessage ? renderStatusMessage() : null}
 
           {/* Step 1: Basic Account Info */}
           <div className="card mb-4">
@@ -218,14 +302,6 @@ export function BusinessProfile({ business, onEdit }: BusinessProfileProps) {
                     </div>
                   </div>
                 )}
-                {business.collaboration_preferences && Object.keys(business.collaboration_preferences).length > 0 && (
-                  <div className="col-12 mb-3">
-                    <label className="form-label text-muted small">Collaboration Preferences</label>
-                    <pre className="bg-light p-2 rounded small">
-                      {JSON.stringify(business.collaboration_preferences, null, 2)}
-                    </pre>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -326,42 +402,17 @@ export function BusinessProfile({ business, onEdit }: BusinessProfileProps) {
           )}
 
           {/* Step 5: Collaboration Preferences */}
-          {business.collaboration_preferences && 
-           (business.collaboration_preferences.preferred_collaboration_types || 
-            business.collaboration_preferences.budget_range || 
-            business.collaboration_preferences.collaboration_notes) && (
+          {business.collaboration_preferences &&
+            Object.keys(business.collaboration_preferences).length > 0 && (
             <div className="card mb-4">
               <div className="card-header d-flex align-items-center">
                 <Users className="me-2" size={20} />
                 <h5 className="mb-0">Step 5: Collaboration Preferences</h5>
               </div>
               <div className="card-body">
-                <div className="row">
-                  {business.collaboration_preferences.preferred_collaboration_types && 
-                   Array.isArray(business.collaboration_preferences.preferred_collaboration_types) &&
-                   business.collaboration_preferences.preferred_collaboration_types.length > 0 && (
-                    <div className="col-12 mb-3">
-                      <label className="form-label text-muted small">Preferred Collaboration Types</label>
-                      <div className="d-flex flex-wrap gap-2">
-                        {business.collaboration_preferences.preferred_collaboration_types.map((type: string, index: number) => (
-                          <span key={index} className="badge bg-success">{type}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {business.collaboration_preferences.budget_range && (
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label text-muted small">Budget Range</label>
-                      <p className="mb-0">{business.collaboration_preferences.budget_range}</p>
-                    </div>
-                  )}
-                  {business.collaboration_preferences.collaboration_notes && (
-                    <div className="col-12 mb-3">
-                      <label className="form-label text-muted small">Collaboration Notes</label>
-                      <p className="mb-0">{business.collaboration_preferences.collaboration_notes}</p>
-                    </div>
-                  )}
-                </div>
+                <CollaborationPreferencesDisplay
+                  preferences={business.collaboration_preferences}
+                />
               </div>
             </div>
           )}

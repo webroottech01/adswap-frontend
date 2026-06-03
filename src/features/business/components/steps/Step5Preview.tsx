@@ -129,26 +129,14 @@ export function Step5Preview({ form, onEditStep }: Step5PreviewProps) {
                     </Button>
                   </div>
                   <div className="card-body">
-                    {data.paidPromotion && (
-                      <div className="mb-2">
-                        <strong>Paid Promotion:</strong>
-                        <div>
-                          {data.paidPromotionTypes && data.paidPromotionTypes.length > 0
-                            ? data.paidPromotionTypes.join(', ')
-                            : 'Enabled'}
-                        </div>
-                      </div>
-                    )}
-                    {data.crossMarketing && (
+                    <div className="mb-2">
+                      <strong>Selected Services:</strong>
                       <div>
-                        <strong>Cross Marketing:</strong>
-                        <div>
-                          {data.crossMarketingTypes && data.crossMarketingTypes.length > 0
-                            ? data.crossMarketingTypes.join(', ')
-                            : 'Enabled'}
-                        </div>
+                        {data.serviceSlugs && data.serviceSlugs.length > 0
+                          ? data.serviceSlugs.join(', ')
+                          : 'None'}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>

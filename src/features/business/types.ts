@@ -6,16 +6,6 @@ import { z } from 'zod';
 export type BusinessType = 'individual' | 'partnership' | 'company';
 
 /**
- * Paid Promotion Types
- */
-export type PaidPromotionType = 'hoardings' | 'pamphlets' | 'space';
-
-/**
- * Cross Marketing Types
- */
-export type CrossMarketingType = 'coupons' | 'discounts';
-
-/**
  * Business Form Data Interface
  */
 export interface BusinessFormData {
@@ -33,10 +23,7 @@ export interface BusinessFormData {
   // Step 3: Collaboration Preference (required)
   providesAdServices: boolean;
   isBuyer: boolean;
-  paidPromotion?: boolean;
-  paidPromotionTypes?: string[];
-  crossMarketing?: boolean;
-  crossMarketingTypes?: string[];
+  serviceSlugs?: string[];
   collaborationPreferences?: Record<string, unknown>;
 
   // Step 4: Business Profile Info + Scale + Audience (optional)
@@ -103,10 +90,7 @@ export const step2Schema = z.object({
 export const step3Schema = z.object({
   providesAdServices: z.boolean(),
   isBuyer: z.boolean(),
-  paidPromotion: z.boolean().optional(),
-  paidPromotionTypes: z.array(z.string()).optional(),
-  crossMarketing: z.boolean().optional(),
-  crossMarketingTypes: z.array(z.string()).optional(),
+  serviceSlugs: z.array(z.string()).optional(),
   collaborationPreferences: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -178,10 +162,7 @@ export const businessFormSchema = z.object({
   // Step 3
   providesAdServices: step3Schema.shape.providesAdServices,
   isBuyer: step3Schema.shape.isBuyer,
-  paidPromotion: step3Schema.shape.paidPromotion,
-  paidPromotionTypes: step3Schema.shape.paidPromotionTypes,
-  crossMarketing: step3Schema.shape.crossMarketing,
-  crossMarketingTypes: step3Schema.shape.crossMarketingTypes,
+  serviceSlugs: step3Schema.shape.serviceSlugs,
   collaborationPreferences: step3Schema.shape.collaborationPreferences,
   // Step 4
   scale: step4Schema.shape.scale,

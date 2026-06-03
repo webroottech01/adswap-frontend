@@ -8,6 +8,7 @@ import Image from 'next/image';
 interface MarketplaceCardProps {
   listing: MarketplaceListing;
   isAuthenticated?: boolean;
+  myBusinessId?: number | null;
   onCollaborateClick?: (listing: MarketplaceListing) => void;
 }
 
@@ -15,7 +16,12 @@ interface MarketplaceCardProps {
  * Marketplace Card Component
  * Displays individual business listing card
  */
-export function MarketplaceCard({ listing, isAuthenticated, onCollaborateClick }: MarketplaceCardProps) {
+export function MarketplaceCard({ listing, isAuthenticated, myBusinessId, onCollaborateClick }: MarketplaceCardProps) {
+  const canCollaborate =
+    Boolean(isAuthenticated && onCollaborateClick) &&
+    (myBusinessId == null || myBusinessId !== listing.id);
+  const collaborateClick = canCollaborate ? onCollaborateClick : undefined;
+
   return (
     <Card className="h-100">
       <div className="card-body d-flex flex-column">
@@ -97,12 +103,12 @@ export function MarketplaceCard({ listing, isAuthenticated, onCollaborateClick }
             </div>
           )}
 
-          {isAuthenticated && onCollaborateClick && (
+          {collaborateClick && (
             <div className="mt-3 pt-2 border-top">
               <button
                 type="button"
                 className="btn btn-primary btn-sm w-100"
-                onClick={() => onCollaborateClick(listing)}
+                onClick={() => collaborateClick(listing)}
               >
                 Collaborate
               </button>

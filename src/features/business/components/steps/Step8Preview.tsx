@@ -148,26 +148,14 @@ export function Step8Preview({ form, onEditStep }: Step8PreviewProps) {
                     <strong>Is Buyer:</strong>
                     <div>{data.isBuyer ? 'Yes' : 'No'}</div>
                   </div>
-                  {data.paidPromotion && (
-                    <div className="mb-2">
-                      <strong>Paid Promotion:</strong>
-                      <div>
-                        {data.paidPromotionTypes && data.paidPromotionTypes.length > 0
-                          ? data.paidPromotionTypes.join(', ')
-                          : 'Enabled'}
-                      </div>
-                    </div>
-                  )}
-                  {data.crossMarketing && (
+                  <div className="mb-2">
+                    <strong>Selected Services:</strong>
                     <div>
-                      <strong>Cross Marketing:</strong>
-                      <div>
-                        {data.crossMarketingTypes && data.crossMarketingTypes.length > 0
-                          ? data.crossMarketingTypes.join(', ')
-                          : 'Enabled'}
-                      </div>
+                      {data.serviceSlugs && data.serviceSlugs.length > 0
+                        ? data.serviceSlugs.join(', ')
+                        : 'None'}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>

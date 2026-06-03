@@ -75,6 +75,24 @@ export const adminApi = {
   },
 
   /**
+   * Get a single business by ID (admin view)
+   */
+  async getBusiness(id: number): Promise<Business> {
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://api.theadswap.com';
+    const token = localStorage.getItem('auth_token');
+
+    const axiosResponse = await axios.get<Business>(`${baseURL}/api/v1/admin/businesses/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    return axiosResponse.data;
+  },
+
+  /**
    * Get business statistics with optional filters
    */
   async getStatistics(filters?: BusinessFilters): Promise<BusinessStatistics> {

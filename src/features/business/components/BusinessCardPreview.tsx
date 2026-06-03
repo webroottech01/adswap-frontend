@@ -63,25 +63,14 @@ export function BusinessCardPreview({ data }: BusinessCardPreviewProps) {
           <div className="border-top pt-3">
             <h6 className="small fw-bold mb-2">Ad Services Offered:</h6>
             <div className="d-flex flex-wrap gap-2">
-              {data.paidPromotion && (
-                <span className="badge bg-info">
-                  Paid Promotion
-                  {data.paidPromotionTypes && data.paidPromotionTypes.length > 0 && (
-                    <span className="ms-1">
-                      ({data.paidPromotionTypes.join(', ')})
-                    </span>
-                  )}
-                </span>
-              )}
-              {data.crossMarketing && (
-                <span className="badge bg-success">
-                  Cross Marketing
-                  {data.crossMarketingTypes && data.crossMarketingTypes.length > 0 && (
-                    <span className="ms-1">
-                      ({data.crossMarketingTypes.join(', ')})
-                    </span>
-                  )}
-                </span>
+              {(data.serviceSlugs || []).length > 0 ? (
+                data.serviceSlugs?.map((slug) => (
+                  <span key={slug} className="badge bg-info">
+                    {slug}
+                  </span>
+                ))
+              ) : (
+                <small className="text-muted">No services selected</small>
               )}
             </div>
           </div>

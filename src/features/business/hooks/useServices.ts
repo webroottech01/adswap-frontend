@@ -56,7 +56,7 @@ export const useServices = () => {
         setError(null);
         
         // Create and store the promise
-        globalFetchPromise = serviceCatalogApi.getServices();
+        globalFetchPromise = serviceCatalogApi.getEnabledServices();
         const data = await globalFetchPromise;
         
         // Cache the result
