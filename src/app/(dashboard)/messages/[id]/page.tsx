@@ -1,28 +1,34 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import type { PendingFile } from '@/shared/forms/FileDropzone';
 import {
-  useConversations,
+  useMessagesContext,
   useConversationDetail,
   useSendMessage,
   ConversationsSidebar,
   ChatWindow,
   MessageInput,
 } from '@/features/messaging';
+import type { MessageSendPayload } from '@/features/messaging/components/MessageInput';
 
 export default function MessageConversationPage() {
   const params = useParams();
   const idParam = params?.id;
   const conversationId = typeof idParam === 'string' ? Number.parseInt(idParam, 10) : NaN;
 
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [chatDragOver, setChatDragOver] = useState(false);
+
   const {
-    data: conversations,
+    conversations,
     meta,
     loading: conversationsLoading,
     error: conversationsError,
-    refetch: refetchConversations,
-  } = useConversations();
+    myBusinessId,
+    refetchConversations,
+  } = useMessagesContext();
 
   const {
     data: conversationDetail,
@@ -38,22 +44,35 @@ export default function MessageConversationPage() {
     clearError: clearSendError,
   } = useSendMessage({
     onSuccess: () => {
-      refetchMessages();
-      refetchConversations();
+      void refetchMessages();
+      void refetchConversations();
     },
   });
 
-  useEffect(() => {
-    refetchConversations();
-  }, [refetchConversations]);
-
-  useEffect(() => {
-    if (conversationId) {
-      refetchMessages();
-    }
-  }, [conversationId, refetchMessages]);
-
   const messages = conversationDetail?.messages ?? [];
+
+  const partnerName = useMemo(() => {
+    const match = conversations?.find((c) => c.id === conversationId);
+    return match?.partner_business_name ?? null;
+  }, [conversations, conversationId]);
+
+  const appendFiles = useCallback((incoming: File[]) => {
+    setPendingFiles((prev) => {
+      const next = [...prev];
+      incoming.forEach((file) => {
+        const entry: PendingFile = { file };
+        if (file.type.startsWith('image/')) {
+          entry.preview = URL.createObjectURL(file);
+        }
+        next.push(entry);
+      });
+      return next;
+    });
+  }, []);
+
+  const handleSend = (payload: MessageSendPayload) => {
+    void send(conversationId, { text: payload.text, files: payload.files });
+  };
 
   return (
     <div className="container-fluid py-4">
@@ -68,10 +87,30 @@ export default function MessageConversationPage() {
             onPageChange={(page) => refetchConversations(page)}
           />
         </div>
-        <div className="col-md-8 d-flex flex-column">
-          <ChatWindow messages={messages} loading={messagesLoading} error={messagesError} />
+        <div
+          className="col-md-8 d-flex flex-column position-relative"
+          onDragEnter={() => setChatDragOver(true)}
+          onDragLeave={(e) => {
+            if (e.currentTarget === e.target) {
+              setChatDragOver(false);
+            }
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={() => setChatDragOver(false)}
+        >
+          <ChatWindow
+            messages={messages}
+            loading={messagesLoading}
+            error={messagesError}
+            currentBusinessId={myBusinessId}
+            partnerBusinessName={partnerName}
+            onFilesDropped={appendFiles}
+            isDragOver={chatDragOver}
+          />
           <MessageInput
-            onSend={(text) => send(conversationId, text)}
+            pendingFiles={pendingFiles}
+            onPendingFilesChange={setPendingFiles}
+            onSend={handleSend}
             loading={sendLoading}
             error={sendError}
             onClearError={clearSendError}
@@ -81,4 +120,3 @@ export default function MessageConversationPage() {
     </div>
   );
 }
-

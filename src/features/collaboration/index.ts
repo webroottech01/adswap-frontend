@@ -7,6 +7,10 @@ export {
   useRejectRequest,
   useNegotiateFlag,
 } from './hooks';
-export type { CollaborationRequest, CollaborationStatusFilter } from './types';
+export type {
+  CollaborationRequest,
+  CollaborationStatusFilter,
+  SendCollaborationPayload,
+} from './types';
 export { CollaborationModal } from './components/CollaborationModal';
 export { CollaborationRequestCard } from './components/CollaborationRequestCard';

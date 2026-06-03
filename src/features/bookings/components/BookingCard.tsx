@@ -6,6 +6,9 @@ import { Card } from '@/ui/Card';
 import { Badge } from '@/ui/Badge';
 import type { Booking } from '../types';
 import { bookingsApi } from '../api';
+import { promotionCategoryLabel } from '@/features/promotions/constants';
+import { PromotionContentPreview } from '@/features/promotions/components/PromotionContentPreview';
+import { PromotionValidityBar } from '@/features/marketplace/components/PromotionValidityBar';
 import { BookingScheduleProgress } from './BookingScheduleProgress';
 import { BookingDeliverables } from './BookingDeliverables';
 import { BookingReviewForm } from './BookingReviewForm';
@@ -56,7 +59,8 @@ export function BookingCard({ booking, onReviewSubmitted }: BookingCardProps) {
     }
   };
 
-  const providerLabel = booking.provider_type === 'paid' ? 'Paid collaboration' : 'Cross-promotion';
+  const category = booking.promotion_category ?? booking.provider_type;
+  const categoryLabel = promotionCategoryLabel(category);
 
   return (
     <Card className="h-100 mb-3">
@@ -66,10 +70,37 @@ export function BookingCard({ booking, onReviewSubmitted }: BookingCardProps) {
             <h5 className="card-title mb-1">{booking.partner_business_name}</h5>
             <small className="text-muted d-block">Accepted on {acceptedLabel}</small>
           </div>
-          <Badge variant={booking.provider_type === 'paid' ? 'primary' : 'secondary'}>
-            {providerLabel}
+          <Badge variant={category === 'paid' ? 'warning' : 'success'}>
+            {categoryLabel}
           </Badge>
         </div>
+
+        {booking.target_promotion && (
+          <div className="mb-3">
+            <h6 className="small text-muted text-uppercase mb-2">Accepted promotion</h6>
+            <PromotionValidityBar promotion={booking.target_promotion} />
+            <div className="mt-2">
+              <PromotionContentPreview promotion={booking.target_promotion} compact showTitle />
+            </div>
+          </div>
+        )}
+
+        {category === 'paid' && (
+          <p className="small mb-2">
+            <strong>Agreed price:</strong>{' '}
+            {booking.offered_price_is_custom
+              ? 'Custom quote'
+              : booking.offered_price != null
+                ? `₹${booking.offered_price}`
+                : '—'}
+          </p>
+        )}
+
+        {booking.collaboration_message?.trim() && (
+          <p className="small text-muted mb-2">
+            <strong>Request note:</strong> {booking.collaboration_message}
+          </p>
+        )}
 
         <BookingScheduleProgress
           daysRemaining={booking.days_remaining}

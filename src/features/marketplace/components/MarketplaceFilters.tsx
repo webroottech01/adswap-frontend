@@ -83,7 +83,7 @@ export function MarketplaceFilters({
 
           <div className="col-md-2">
             <label htmlFor="provider_type" className="form-label">
-              Provider Type
+              Promotion type
             </label>
             <select
               id="provider_type"

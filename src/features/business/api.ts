@@ -32,6 +32,7 @@ export interface BusinessAsset {
   id: number;
   asset_type: string;
   file_path: string;
+  file_url?: string | null;
   file_name: string;
   file_size?: number;
   mime_type?: string;
@@ -45,11 +46,19 @@ export interface BusinessDocument {
   id: number;
   document_type: string;
   file_path: string;
+  file_url?: string | null;
   file_name: string;
   file_size?: number;
   mime_type?: string;
   status: string;
   uploaded_at?: string;
+}
+
+export interface BusinessServiceItem {
+  id: number;
+  name: string;
+  slug: string;
+  category_name: string;
 }
 
 /**
@@ -69,7 +78,10 @@ export interface Business {
   email: string | null;
   website: string | null;
   logo_path: string | null;
+  logo_url?: string | null;
   service_ids: number[];
+  services?: BusinessServiceItem[];
+  average_rating?: number | null;
   business_type?: string;
   registration_number?: string;
   founded_year?: number;
@@ -187,8 +199,10 @@ export const businessApi = {
   /**
    * Get the authenticated user's business
    */
-  async getMyBusiness(): Promise<Business> {
-    const response = await api.get<Business>('/api/v1/business/me');
+  async getMyBusiness(options?: { skipGlobalLoading?: boolean }): Promise<Business> {
+    const response = await api.get<Business>('/api/v1/business/me', {
+      skipGlobalLoading: options?.skipGlobalLoading,
+    });
     return response.data;
   },
 

@@ -1,26 +1,37 @@
-/**
- * TypeScript types for Marketplace module
- */
+import type { Promotion } from '@/features/promotions/types';
 
-/**
- * Marketplace Listing Interface
- */
+export interface MarketplaceBusinessSummary {
+  id: number;
+  name: string;
+  category: string;
+  logo_url: string | null;
+  address: string | null;
+  is_verified: boolean;
+  average_rating: number | null;
+}
+
+export interface MarketplacePromotionDetail {
+  business: MarketplaceBusinessSummary;
+  promotion: Promotion;
+}
+
 export interface MarketplaceListing {
   id: number;
   name: string;
   category: string;
-  description: string | null;
+  logo_url: string | null;
   address: string | null;
-  logo_path: string | null;
-  brand_size: string | null;
-  annual_revenue_range: string | null;
-  services: string[];
-  created_at: string;
+  is_verified: boolean;
+  average_rating: number | null;
+  promotions: Promotion[];
 }
 
-/**
- * Marketplace Filters Interface
- */
+export interface MarketplaceCollaborationTarget {
+  businessId: number;
+  businessName: string;
+  promotion: Pick<Promotion, 'id' | 'category' | 'title'>;
+}
+
 export interface MarketplaceFilters {
   city?: string;
   category?: string;
@@ -32,15 +43,19 @@ export interface MarketplaceFilters {
   per_page?: number;
 }
 
-/**
- * Filter Metadata Interface
- */
 export interface MarketplaceFilterMetadata {
   categories: string[];
   cities: string[];
   revenue_ranges: string[];
 }
 
+export interface CollaborationContext {
+  collaboration_id: number | null;
+  conversation_id: number | null;
+  status: string | null;
+  can_message: boolean;
+}
 
-
-
+export interface SavedBrandCheck {
+  saved: boolean;
+}

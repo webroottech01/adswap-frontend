@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { collaborationApi } from './api';
-import type { CollaborationRequest, CollaborationStatusFilter } from './types';
+import type {
+  CollaborationRequest,
+  CollaborationStatusFilter,
+  SendCollaborationPayload,
+} from './types';
 
 /**
  * Fetch sent collaboration requests.
@@ -47,6 +51,10 @@ export function useSentRequests(statusFilter: CollaborationStatusFilter = 'all')
     }
   }, [statusFilter]);
 
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
   return { data, loading, error, refetch };
 }
 
@@ -73,6 +81,10 @@ export function useReceivedRequests(statusFilter: CollaborationStatusFilter = 'a
       setLoading(false);
     }
   }, [statusFilter]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   return { data, loading, error, refetch };
 }
@@ -116,12 +128,13 @@ export function useSendRequest(options?: { onSuccess?: () => void; onError?: (me
   const [error, setError] = useState<string | null>(null);
 
   const send = useCallback(
-    async (receiverBusinessId: number, message: string) => {
+    async (payload: SendCollaborationPayload): Promise<boolean> => {
       setLoading(true);
       setError(null);
       try {
-        await collaborationApi.sendRequest(receiverBusinessId, message);
+        await collaborationApi.sendRequest(payload);
         options?.onSuccess?.();
+        return true;
       } catch (err: unknown) {
         const message =
           err && typeof err === 'object' && 'response' in err
@@ -129,6 +142,7 @@ export function useSendRequest(options?: { onSuccess?: () => void; onError?: (me
             : 'Failed to send request';
         setError(message);
         options?.onError?.(message);
+        return false;
       } finally {
         setLoading(false);
       }

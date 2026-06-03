@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthSession } from '@/features/auth/public';
+import { MessagesProvider } from '@/features/messaging/MessagesProvider';
 
 /**
  * Messages layout: only business_owner or super_admin can access.
@@ -30,6 +31,5 @@ export default function MessagesLayout({
     return null;
   }
 
-  return <>{children}</>;
+  return <MessagesProvider>{children}</MessagesProvider>;
 }
-

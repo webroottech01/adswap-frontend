@@ -39,6 +39,10 @@ export function paidPlacementLabel(type?: string): string {
   return PAID_PLACEMENT_TYPE_OPTIONS.find((o) => o.value === type)?.label ?? type ?? '—';
 }
 
+export function promotionCategoryLabel(category: 'cross' | 'paid'): string {
+  return category === 'paid' ? 'Paid Promotion' : 'Cross Marketing';
+}
+
 export function paidDurationLabel(unit?: string, value?: number): string {
   if (!unit) return '—';
   const unitLabel = PAID_DURATION_UNIT_OPTIONS.find((o) => o.value === unit)?.label ?? unit;

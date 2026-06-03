@@ -1,6 +1,6 @@
 'use client';
 
-import { MarketplaceListing } from '../types';
+import { MarketplaceListing, MarketplaceCollaborationTarget } from '../types';
 import { MarketplaceCard } from './MarketplaceCard';
 import { MarketplaceSkeleton } from './MarketplaceSkeleton';
 
@@ -15,7 +15,7 @@ interface MarketplaceGridProps {
   onPageChange: (page: number) => void;
   isAuthenticated?: boolean;
   myBusinessId?: number | null;
-  onCollaborateClick?: (listing: MarketplaceListing) => void;
+  onCollaborateClick?: (target: MarketplaceCollaborationTarget) => void;
 }
 
 /**
@@ -36,7 +36,7 @@ export function MarketplaceGrid({
       <>
         <div className="row g-4">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="col-md-4 col-lg-3">
+            <div key={index} className="col-12 col-lg-6">
               <MarketplaceSkeleton />
             </div>
           ))}
@@ -49,9 +49,9 @@ export function MarketplaceGrid({
     return (
       <div className="card">
         <div className="card-body text-center py-5">
-          <h5 className="text-muted mb-3">No listings found</h5>
+          <h5 className="text-muted mb-3">No published promotions yet</h5>
           <p className="text-muted">
-            Try adjusting your filters to see more results.
+            Try adjusting your filters or check back when providers publish promotions.
           </p>
         </div>
       </div>
@@ -61,16 +61,19 @@ export function MarketplaceGrid({
   return (
     <>
       <div className="row g-4">
-        {listings.map((listing) => (
-          <div key={listing.id} className="col-md-4 col-lg-3">
-            <MarketplaceCard
-              listing={listing}
-              isAuthenticated={isAuthenticated}
-              myBusinessId={myBusinessId}
-              onCollaborateClick={onCollaborateClick}
-            />
-          </div>
-        ))}
+        {listings.flatMap((listing) =>
+          (listing.promotions?.length ? listing.promotions : []).map((promotion) => (
+            <div key={`${listing.id}-${promotion.id}`} className="col-12 col-lg-6">
+              <MarketplaceCard
+                listing={listing}
+                promotion={promotion}
+                isAuthenticated={isAuthenticated}
+                myBusinessId={myBusinessId}
+                onCollaborateClick={onCollaborateClick}
+              />
+            </div>
+          )),
+        )}
       </div>
 
       {pagination.last_page > 1 && (

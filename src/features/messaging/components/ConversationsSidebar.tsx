@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { ConversationListItem, ConversationsMeta } from '../types';
+import { ConversationsSidebarSkeleton } from './ConversationsSidebarSkeleton';
 
 interface ConversationsSidebarProps {
   conversations: ConversationListItem[] | undefined;
@@ -35,11 +36,7 @@ export function ConversationsSidebar({
         )}
 
         {loading && items.length === 0 ? (
-          <div className="d-flex justify-content-center align-items-center py-4">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading…</span>
-            </div>
-          </div>
+          <ConversationsSidebarSkeleton />
         ) : items.length === 0 ? (
           <div className="text-center text-muted py-4">
             <p className="mb-0">No conversations yet.</p>
@@ -60,7 +57,9 @@ export function ConversationsSidebar({
                   }`}
                 >
                   <div className="d-flex justify-content-between align-items-center mb-1">
-                    <span className="fw-semibold">Conversation #{conversation.id}</span>
+                    <span className="fw-semibold">
+                      {conversation.partner_business_name ?? `Conversation #${conversation.id}`}
+                    </span>
                     <span className="small text-muted">
                       {new Date(conversation.updated_at).toLocaleDateString()}
                     </span>

@@ -16,6 +16,7 @@ import {
   defaultDetailsForCategory,
   detailsFromPromotion,
 } from '../utils/formDefaults';
+import { slugifyPromotionTitle } from '../utils/slugify';
 
 interface PromotionFormModalProps {
   show: boolean;
@@ -120,6 +121,8 @@ export function PromotionFormModal({
       ? isPaidValid(title, paidDetails)
       : isCrossValid(title, crossDetails);
 
+  const slugPreview = !isEdit && title.trim() ? slugifyPromotionTitle(title) : null;
+
   const modalTitle = isEdit
     ? effectiveCategory === 'paid'
       ? 'Edit paid package'
@@ -155,6 +158,15 @@ export function PromotionFormModal({
                 className="modal-body overflow-auto flex-grow-1"
                 style={{ maxHeight: 'calc(100vh - 12rem)' }}
               >
+                {slugPreview && (
+                  <p className="small text-muted mb-3">
+                    URL slug: <code className="text-body">{slugPreview}</code>
+                    <span className="d-block mt-1">
+                      Assigned when you save; may include a number if this slug is already in use.
+                    </span>
+                  </p>
+                )}
+
                 {effectiveCategory === 'paid' ? (
                   <PaidPromotionFormFields
                     title={title}
