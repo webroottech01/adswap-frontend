@@ -13,9 +13,10 @@ export default function BookingsPage() {
   return (
     <div className="container-fluid py-4">
       <div className="mb-4">
-        <h1 className="h3 mb-1">Bookings</h1>
+        <h1 className="h3 mb-1">Bookings / Accepted Promotions</h1>
         <p className="text-muted mb-0">
-          View all accepted collaborations where your business is a participant.
+          Confirmed promotion deals from accepted collaborations. Track your 30-day schedule,
+          deliverables, and leave a review when complete.
         </p>
       </div>
 
@@ -36,9 +37,8 @@ export default function BookingsPage() {
           total: pagination.total,
         }}
         onPageChange={handlePageChange}
+        onReviewSubmitted={() => refetch()}
       />
     </div>
   );
 }
-
-

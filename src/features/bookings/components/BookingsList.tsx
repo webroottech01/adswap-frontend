@@ -14,9 +14,16 @@ interface BookingsListProps {
     total: number;
   };
   onPageChange: (page: number) => void;
+  onReviewSubmitted?: () => void;
 }
 
-export function BookingsList({ bookings, loading, pagination, onPageChange }: BookingsListProps) {
+export function BookingsList({
+  bookings,
+  loading,
+  pagination,
+  onPageChange,
+  onReviewSubmitted,
+}: BookingsListProps) {
   if (loading && bookings.length === 0) {
     return (
       <div className="row g-3">
@@ -49,8 +56,8 @@ export function BookingsList({ bookings, loading, pagination, onPageChange }: Bo
     <>
       <div className="row g-3">
         {bookings.map((booking) => (
-          <div key={booking.id} className="col-md-6 col-lg-4">
-            <BookingCard booking={booking} />
+          <div key={booking.id} className="col-12 col-lg-6">
+            <BookingCard booking={booking} onReviewSubmitted={onReviewSubmitted} />
           </div>
         ))}
       </div>

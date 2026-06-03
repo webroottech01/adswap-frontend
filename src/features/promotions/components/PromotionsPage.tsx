@@ -6,11 +6,24 @@ import { Plus } from 'lucide-react';
 import { businessApi } from '@/features/business/api';
 import { promotionsApi } from '../api';
 import { usePromotionMutations, usePromotions } from '../hooks';
-import type { Promotion, PromotionStatusFilter } from '../types';
+import type {
+  CreatePromotionPayload,
+  CrossPromotionDetails,
+  PaidPromotionDetails,
+  Promotion,
+  PromotionCategory,
+  PromotionFormData,
+  PromotionStatusFilter,
+} from '../types';
 import { PromotionCard } from './PromotionCard';
 import { PromotionFormModal } from './PromotionFormModal';
 
-const TABS: { key: PromotionStatusFilter; label: string }[] = [
+const CATEGORY_TABS: { key: PromotionCategory; label: string }[] = [
+  { key: 'cross', label: 'Cross Promotions' },
+  { key: 'paid', label: 'Paid Promotions' },
+];
+
+const STATUS_TABS: { key: PromotionStatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'draft', label: 'Draft' },
   { key: 'published', label: 'Published' },
@@ -18,13 +31,14 @@ const TABS: { key: PromotionStatusFilter; label: string }[] = [
 ];
 
 export function PromotionsPage() {
+  const [categoryFilter, setCategoryFilter] = useState<PromotionCategory>('cross');
   const [statusFilter, setStatusFilter] = useState<PromotionStatusFilter>('all');
   const [hasBusiness, setHasBusiness] = useState<boolean | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [deletingMediaId, setDeletingMediaId] = useState<number | null>(null);
 
-  const { data, loading, error, refetch } = usePromotions(statusFilter);
+  const { data, loading, error, refetch } = usePromotions(categoryFilter, statusFilter);
   const mutations = usePromotionMutations({
     onSuccess: () => {
       refetch();
@@ -52,28 +66,37 @@ export function PromotionsPage() {
     mutations.clearError();
   };
 
-  const handleFormSubmit = async (formData: {
-    title: string;
-    description: string;
-    files: File[];
-  }) => {
+  const buildPayload = (
+    formData: PromotionFormData,
+    category: PromotionCategory,
+  ): CreatePromotionPayload => {
+    if (category === 'paid') {
+      return {
+        category: 'paid',
+        title: formData.title,
+        details: formData.details as PaidPromotionDetails,
+      };
+    }
+    return {
+      category: 'cross',
+      title: formData.title,
+      details: formData.details as CrossPromotionDetails,
+    };
+  };
+
+  const handleFormSubmit = async (formData: PromotionFormData) => {
     if (editingPromotion) {
       await mutations.update(
         editingPromotion.id,
         {
           title: formData.title,
-          description: formData.description || undefined,
+          details: formData.details,
         },
         formData.files,
       );
     } else {
-      await mutations.create(
-        {
-          title: formData.title,
-          description: formData.description || undefined,
-        },
-        formData.files,
-      );
+      const payload = buildPayload(formData, categoryFilter);
+      await mutations.create(payload, formData.files);
     }
   };
 
@@ -118,6 +141,7 @@ export function PromotionsPage() {
   }
 
   const displayError = error || mutations.error;
+  const isPaid = categoryFilter === 'paid';
 
   return (
     <div className="container-fluid py-4">
@@ -125,13 +149,14 @@ export function PromotionsPage() {
         <div>
           <h1 className="h3 mb-1">Promotions</h1>
           <p className="text-muted mb-0">
-            Promotion opportunities you offer to partner businesses — e.g. coupon placement,
-            Instagram story features, and more.
+            {isPaid
+              ? 'Paid placement packages you offer to partner businesses.'
+              : 'Cross-promotion opportunities you offer to partner businesses.'}
           </p>
         </div>
         <button type="button" className="btn btn-primary" onClick={openCreate}>
           <Plus size={18} className="me-1" />
-          Create promotion
+          {isPaid ? 'Create paid package' : 'Create cross promotion'}
         </button>
       </div>
 
@@ -147,8 +172,22 @@ export function PromotionsPage() {
         </div>
       )}
 
+      <ul className="nav nav-pills mb-3 gap-2">
+        {CATEGORY_TABS.map((tab) => (
+          <li key={tab.key} className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${categoryFilter === tab.key ? 'active' : ''}`}
+              onClick={() => setCategoryFilter(tab.key)}
+            >
+              {tab.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+
       <ul className="nav nav-tabs mb-4">
-        {TABS.map((tab) => (
+        {STATUS_TABS.map((tab) => (
           <li key={tab.key} className="nav-item">
             <button
               type="button"
@@ -172,11 +211,11 @@ export function PromotionsPage() {
           <div className="card-body text-center py-5">
             <p className="text-muted mb-3">
               {statusFilter === 'all'
-                ? 'You have not created any promotions yet.'
-                : `No ${statusFilter} promotions.`}
+                ? `You have not created any ${isPaid ? 'paid' : 'cross'} promotions yet.`
+                : `No ${statusFilter} ${isPaid ? 'paid' : 'cross'} promotions.`}
             </p>
             <button type="button" className="btn btn-primary" onClick={openCreate}>
-              Create your first promotion
+              {isPaid ? 'Create your first paid package' : 'Create your first cross promotion'}
             </button>
           </div>
         </div>
@@ -198,6 +237,7 @@ export function PromotionsPage() {
 
       <PromotionFormModal
         show={modalOpen}
+        category={categoryFilter}
         promotion={editingPromotion}
         loading={mutations.loading}
         onClose={() => {

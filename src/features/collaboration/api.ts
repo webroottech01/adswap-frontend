@@ -19,17 +19,30 @@ export const collaborationApi = {
   /**
    * Get requests sent by the current user's business.
    */
-  async getSent(): Promise<CollaborationRequest[]> {
-    const response = await api.get<CollaborationRequest[]>('/api/v1/collaborations/sent');
+  async getSent(status?: 'pending' | 'accepted' | 'rejected'): Promise<CollaborationRequest[]> {
+    const params = status ? { status } : undefined;
+    const response = await api.get<CollaborationRequest[]>('/api/v1/collaborations/sent', { params });
     return Array.isArray(response.data) ? response.data : [];
   },
 
   /**
    * Get requests received by the current user's business.
    */
-  async getReceived(): Promise<CollaborationRequest[]> {
-    const response = await api.get<CollaborationRequest[]>('/api/v1/collaborations/received');
+  async getReceived(status?: 'pending' | 'accepted' | 'rejected'): Promise<CollaborationRequest[]> {
+    const params = status ? { status } : undefined;
+    const response = await api.get<CollaborationRequest[]>('/api/v1/collaborations/received', { params });
     return Array.isArray(response.data) ? response.data : [];
+  },
+
+  /**
+   * Set or clear the private negotiate reminder flag for the current user's business.
+   */
+  async setNegotiateFlag(id: number, marked: boolean): Promise<CollaborationRequest> {
+    const response = await api.patch<CollaborationRequest>(
+      `/api/v1/collaborations/${id}/negotiate-flag`,
+      { marked },
+    );
+    return response.data;
   },
 
   /**

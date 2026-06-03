@@ -1,5 +1,11 @@
 import api, { ApiError } from '@/lib/api';
-import type { Booking, BookingFilters, PaginatedResponse } from './types';
+import type {
+  Booking,
+  BookingFilters,
+  PaginatedResponse,
+  SubmitReviewPayload,
+  BookingReview,
+} from './types';
 
 export const bookingsApi = {
   async getBookings(filters: BookingFilters = {}): Promise<PaginatedResponse<Booking>> {
@@ -15,6 +21,14 @@ export const bookingsApi = {
       params,
     });
 
+    return response.data;
+  },
+
+  async submitReview(collaborationId: number, payload: SubmitReviewPayload): Promise<BookingReview> {
+    const response = await api.post<BookingReview>(
+      `/api/v1/bookings/${collaborationId}/review`,
+      payload,
+    );
     return response.data;
   },
 };

@@ -2,12 +2,13 @@
 
 import { ServiceCategory } from '@/features/serviceCatalog/api';
 import { Button } from '@/ui/Button';
-import { Edit, RefreshCw } from 'lucide-react';
+import { Edit, RefreshCw, Trash2 } from 'lucide-react';
 
 interface ServiceCategoryListProps {
   categories: ServiceCategory[];
   loading?: boolean;
   onEdit?: (category: ServiceCategory) => void;
+  onDelete?: (category: ServiceCategory) => void;
   onRefresh?: () => void;
 }
 
@@ -18,6 +19,7 @@ export function ServiceCategoryList({
   categories,
   loading = false,
   onEdit,
+  onDelete,
   onRefresh,
 }: ServiceCategoryListProps) {
   if (loading) {
@@ -79,17 +81,30 @@ export function ServiceCategoryList({
                 )}
               </td>
               <td>
-                {onEdit && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    outline
-                    icon={Edit}
-                    onClick={() => onEdit(category)}
-                  >
-                    Edit
-                  </Button>
-                )}
+                <div className="d-flex gap-2">
+                  {onEdit && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      outline
+                      icon={Edit}
+                      onClick={() => onEdit(category)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      outline
+                      icon={Trash2}
+                      onClick={() => onDelete(category)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}

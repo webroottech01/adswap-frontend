@@ -12,4 +12,7 @@ export interface CollaborationRequest {
   sender_business_name?: string | null;
   receiver_business_name?: string | null;
   conversation_id?: number | null;
+  marked_negotiating?: boolean;
 }
+
+export type CollaborationStatusFilter = 'all' | 'pending' | 'accepted' | 'rejected' | 'negotiate';

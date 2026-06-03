@@ -1,26 +1,59 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileDropzone, PendingFile } from './FileDropzone';
-import type { Promotion } from '../types';
-import { resolvePromotionMediaUrl } from '../utils/mediaUrl';
+import { CrossPromotionFormFields } from './CrossPromotionFormFields';
+import { PaidPromotionFormFields } from './PaidPromotionFormFields';
+import { PromotionMediaSection } from './PromotionMediaSection';
+import { PendingFile } from './FileDropzone';
+import type {
+  CrossPromotionDetails,
+  PaidPromotionDetails,
+  Promotion,
+  PromotionCategory,
+  PromotionFormData,
+} from '../types';
+import {
+  defaultDetailsForCategory,
+  detailsFromPromotion,
+} from '../utils/formDefaults';
 
 interface PromotionFormModalProps {
   show: boolean;
+  category: PromotionCategory;
   promotion?: Promotion | null;
   loading?: boolean;
   onClose: () => void;
-  onSubmit: (data: {
-    title: string;
-    description: string;
-    files: File[];
-  }) => void | Promise<void>;
+  onSubmit: (data: PromotionFormData) => void | Promise<void>;
   onDeleteMedia?: (mediaId: number) => void | Promise<void>;
   deletingMediaId?: number | null;
 }
 
+function isCrossValid(title: string, details: CrossPromotionDetails): boolean {
+  return (
+    title.trim().length > 0 &&
+    Boolean(details.promotion_type) &&
+    Boolean(details.what_i_can_offer?.trim()) &&
+    Boolean(details.what_i_expect_in_return?.trim()) &&
+    Boolean(details.target_partner_category?.trim()) &&
+    Boolean(details.target_location?.trim())
+  );
+}
+
+function isPaidValid(title: string, details: PaidPromotionDetails): boolean {
+  const price = details.price ?? {};
+  const priceOk = price.is_custom_quote || (price.amount != null && price.amount >= 0);
+  return (
+    title.trim().length > 0 &&
+    Boolean(details.placement_type) &&
+    Boolean(details.available_slots?.trim()) &&
+    Boolean(details.duration?.unit) &&
+    priceOk
+  );
+}
+
 export function PromotionFormModal({
   show,
+  category,
   promotion,
   loading = false,
   onClose,
@@ -29,41 +62,87 @@ export function PromotionFormModal({
   deletingMediaId = null,
 }: PromotionFormModalProps) {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [crossDetails, setCrossDetails] = useState<CrossPromotionDetails>(
+    defaultDetailsForCategory('cross') as CrossPromotionDetails,
+  );
+  const [paidDetails, setPaidDetails] = useState<PaidPromotionDetails>(
+    defaultDetailsForCategory('paid') as PaidPromotionDetails,
+  );
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
+  const effectiveCategory = promotion?.category ?? category;
   const isEdit = Boolean(promotion);
 
   useEffect(() => {
     if (show) {
       setTitle(promotion?.title ?? '');
-      setDescription(promotion?.description ?? '');
+      if (effectiveCategory === 'paid') {
+        setPaidDetails(detailsFromPromotion(promotion) as PaidPromotionDetails);
+      } else {
+        setCrossDetails(detailsFromPromotion(promotion) as CrossPromotionDetails);
+      }
       setPendingFiles([]);
     }
-  }, [show, promotion]);
+  }, [show, promotion, effectiveCategory]);
 
   if (!show) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    onSubmit({
-      title: title.trim(),
-      description: description.trim(),
-      files: pendingFiles.map((p) => p.file),
-    });
+    if (effectiveCategory === 'paid') {
+      if (!isPaidValid(title, paidDetails)) return;
+      onSubmit({
+        title: title.trim(),
+        details: {
+          ...paidDetails,
+          price: {
+            is_custom_quote: Boolean(paidDetails.price?.is_custom_quote),
+            amount: paidDetails.price?.is_custom_quote
+              ? undefined
+              : paidDetails.price?.amount,
+          },
+          approval_required: Boolean(paidDetails.approval_required),
+        },
+        files: pendingFiles.map((p) => p.file),
+      });
+    } else {
+      if (!isCrossValid(title, crossDetails)) return;
+      onSubmit({
+        title: title.trim(),
+        details: crossDetails,
+        files: pendingFiles.map((p) => p.file),
+      });
+    }
   };
+
+  const canSubmit =
+    effectiveCategory === 'paid'
+      ? isPaidValid(title, paidDetails)
+      : isCrossValid(title, crossDetails);
+
+  const modalTitle = isEdit
+    ? effectiveCategory === 'paid'
+      ? 'Edit paid package'
+      : 'Edit cross promotion'
+    : effectiveCategory === 'paid'
+      ? 'Create paid package'
+      : 'Create cross promotion';
 
   return (
     <>
       <div className="modal fade show d-block" tabIndex={-1} role="dialog">
-        <div className="modal-dialog modal-lg modal-dialog-scrollable">
-          <div className="modal-content">
-            <form onSubmit={handleSubmit}>
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  {isEdit ? 'Edit promotion' : 'Create promotion'}
-                </h5>
+        <div className="modal-dialog modal-lg modal-dialog-scrollable my-3">
+          <div
+            className="modal-content d-flex flex-column"
+            style={{ maxHeight: 'calc(100vh - 2rem)' }}
+          >
+            <form
+              onSubmit={handleSubmit}
+              className="d-flex flex-column flex-grow-1"
+              style={{ minHeight: 0 }}
+            >
+              <div className="modal-header flex-shrink-0">
+                <h5 className="modal-title">{modalTitle}</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -72,96 +151,40 @@ export function PromotionFormModal({
                   aria-label="Close"
                 />
               </div>
-              <div className="modal-body">
-                <div className="mb-3">
-                  <label htmlFor="promotionTitle" className="form-label">
-                    Title <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    id="promotionTitle"
-                    type="text"
-                    className="form-control"
-                    placeholder='e.g. "Place your coupons at my salon reception"'
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                    maxLength={255}
-                    disabled={loading}
+              <div
+                className="modal-body overflow-auto flex-grow-1"
+                style={{ maxHeight: 'calc(100vh - 12rem)' }}
+              >
+                {effectiveCategory === 'paid' ? (
+                  <PaidPromotionFormFields
+                    title={title}
+                    details={paidDetails}
+                    loading={loading}
+                    onTitleChange={setTitle}
+                    onDetailsChange={setPaidDetails}
                   />
-                </div>
-
-                <div className="mb-4">
-                  <label htmlFor="promotionDescription" className="form-label">
-                    Description
-                  </label>
-                  <textarea
-                    id="promotionDescription"
-                    className="form-control"
-                    rows={3}
-                    placeholder="Describe the promotion opportunity for partner businesses..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    maxLength={5000}
-                    disabled={loading}
+                ) : (
+                  <CrossPromotionFormFields
+                    title={title}
+                    details={crossDetails}
+                    loading={loading}
+                    onTitleChange={setTitle}
+                    onDetailsChange={setCrossDetails}
                   />
-                </div>
-
-                {isEdit && promotion && promotion.media.length > 0 && (
-                  <div className="mb-4">
-                    <h6 className="mb-2">Uploaded content</h6>
-                    <div className="row g-2">
-                      {promotion.media.map((media) => {
-                        const isImage = media.mime_type?.startsWith('image/');
-                        return (
-                          <div key={media.id} className="col-6 col-md-4">
-                            <div className="card">
-                              <div className="card-body p-2 position-relative">
-                                {isImage ? (
-                                  <img
-                                    src={resolvePromotionMediaUrl(media)}
-                                    alt={media.file_name}
-                                    className="img-fluid rounded"
-                                    style={{ height: 100, width: '100%', objectFit: 'cover' }}
-                                  />
-                                ) : (
-                                  <div
-                                    className="d-flex align-items-center justify-content-center bg-light rounded small text-muted"
-                                    style={{ height: 100 }}
-                                  >
-                                    {media.file_name}
-                                  </div>
-                                )}
-                                {onDeleteMedia && (
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-1"
-                                    onClick={() => onDeleteMedia(media.id)}
-                                    disabled={loading || deletingMediaId === media.id}
-                                  >
-                                    {deletingMediaId === media.id ? '…' : 'Remove'}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
                 )}
 
-                <div>
-                  <h6 className="mb-2">
-                    {isEdit ? 'Add more content' : 'Upload content for this promotion'}
-                  </h6>
-                  <FileDropzone
-                    files={pendingFiles}
-                    onChange={setPendingFiles}
-                    disabled={loading}
-                  />
-                </div>
+                <hr className="my-4" />
+
+                <PromotionMediaSection
+                  promotion={promotion}
+                  pendingFiles={pendingFiles}
+                  onPendingFilesChange={setPendingFiles}
+                  loading={loading}
+                  onDeleteMedia={onDeleteMedia}
+                  deletingMediaId={deletingMediaId}
+                />
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer flex-shrink-0">
                 <button
                   type="button"
                   className="btn btn-outline-secondary"
@@ -170,7 +193,7 @@ export function PromotionFormModal({
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={loading || !title.trim()}>
+                <button type="submit" className="btn btn-primary" disabled={loading || !canSubmit}>
                   {loading ? 'Saving…' : isEdit ? 'Save changes' : 'Create promotion'}
                 </button>
               </div>
