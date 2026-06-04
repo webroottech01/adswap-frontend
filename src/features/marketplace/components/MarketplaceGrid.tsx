@@ -16,6 +16,12 @@ interface MarketplaceGridProps {
   isAuthenticated?: boolean;
   myBusinessId?: number | null;
   onCollaborateClick?: (target: MarketplaceCollaborationTarget) => void;
+  savedBrandIds?: Set<number>;
+  savedPromotionIds?: Set<number>;
+  onToggleSaveBrand?: (businessId: number) => void;
+  onToggleSavePromotion?: (promotionId: number) => void;
+  saveBrandLoadingId?: number | null;
+  savePromotionLoadingId?: number | null;
 }
 
 /**
@@ -30,6 +36,12 @@ export function MarketplaceGrid({
   isAuthenticated,
   myBusinessId,
   onCollaborateClick,
+  savedBrandIds,
+  savedPromotionIds,
+  onToggleSaveBrand,
+  onToggleSavePromotion,
+  saveBrandLoadingId,
+  savePromotionLoadingId,
 }: MarketplaceGridProps) {
   if (loading && listings.length === 0) {
     return (
@@ -70,6 +82,16 @@ export function MarketplaceGrid({
                 isAuthenticated={isAuthenticated}
                 myBusinessId={myBusinessId}
                 onCollaborateClick={onCollaborateClick}
+                brandSaved={savedBrandIds?.has(listing.id)}
+                promotionSaved={savedPromotionIds?.has(promotion.id)}
+                onToggleSaveBrand={
+                  onToggleSaveBrand ? () => onToggleSaveBrand(listing.id) : undefined
+                }
+                onToggleSavePromotion={
+                  onToggleSavePromotion ? () => onToggleSavePromotion(promotion.id) : undefined
+                }
+                saveBrandLoading={saveBrandLoadingId === listing.id}
+                savePromotionLoading={savePromotionLoadingId === promotion.id}
               />
             </div>
           )),

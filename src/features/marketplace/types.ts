@@ -59,3 +59,12 @@ export interface CollaborationContext {
 export interface SavedBrandCheck {
   saved: boolean;
 }
+
+export interface SavedPromotionCheck {
+  saved: boolean;
+}
+
+export interface SavedPromotionItem {
+  promotion: Promotion;
+  business: MarketplaceBusinessSummary;
+}

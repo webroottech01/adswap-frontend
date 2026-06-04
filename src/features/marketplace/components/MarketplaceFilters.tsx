@@ -7,6 +7,7 @@ interface MarketplaceFiltersProps {
   metadata: MarketplaceFilterMetadata | null;
   metadataLoading: boolean;
   onFiltersChange: (filters: MarketplaceFiltersType) => void;
+  onClearFilters: () => void;
 }
 
 /**
@@ -18,18 +19,12 @@ export function MarketplaceFilters({
   metadata,
   metadataLoading,
   onFiltersChange,
+  onClearFilters,
 }: MarketplaceFiltersProps) {
   const handleFilterChange = (key: keyof MarketplaceFiltersType, value: string | undefined) => {
     onFiltersChange({
       ...filters,
       [key]: value || undefined,
-    });
-  };
-
-  const clearFilters = () => {
-    onFiltersChange({
-      page: 1,
-      per_page: 15,
     });
   };
 
@@ -141,7 +136,7 @@ export function MarketplaceFilters({
               <button
                 type="button"
                 className="btn btn-outline-secondary"
-                onClick={clearFilters}
+                onClick={onClearFilters}
               >
                 Clear Filters
               </button>

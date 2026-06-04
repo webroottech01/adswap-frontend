@@ -5,6 +5,7 @@ import { BusinessStatusBadge } from '@/features/admin/components/BusinessStatusB
 import { BusinessStatus } from '@/features/admin/types';
 import { AlertCircle, XCircle, Ban } from 'lucide-react';
 import { BusinessProfileView } from './profile/BusinessProfileView';
+import { ProfileCompletionBanner } from './ProfileCompletionBanner';
 
 interface BusinessProfileProps {
   business: Business;
@@ -84,6 +85,18 @@ export function BusinessProfile({
   return (
     <div className="container-fluid py-4">
       <h3 className="mb-4">{title}</h3>
+
+      {(business.profile_completion_percentage ?? 0) < 100 && onEdit && (
+        <div className="mb-3">
+          <ProfileCompletionBanner
+            percentage={business.profile_completion_percentage ?? 0}
+            sections={business.completion_sections}
+          />
+          <button type="button" className="btn btn-outline-primary btn-sm" onClick={onEdit}>
+            Continue setup
+          </button>
+        </div>
+      )}
 
       {showStatusMessage ? renderStatusMessage() : null}
 
