@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CrossPromotionFormFields } from './CrossPromotionFormFields';
 import { PaidPromotionFormFields } from './PaidPromotionFormFields';
 import { PromotionMediaSection } from './PromotionMediaSection';
@@ -17,12 +17,17 @@ import {
   detailsFromPromotion,
 } from '../utils/formDefaults';
 import { slugifyPromotionTitle } from '../utils/slugify';
+import { useBusinessCategories } from '@/features/business/hooks/useBusinessCategories';
+import { categoryLabelsFromIds } from '../utils/categoryLabels';
+import { formatFieldErrors } from '../api';
 
 interface PromotionFormModalProps {
   show: boolean;
   category: PromotionCategory;
   promotion?: Promotion | null;
   loading?: boolean;
+  submitError?: string | null;
+  fieldErrors?: Record<string, string[]>;
   onClose: () => void;
   onSubmit: (data: PromotionFormData) => void | Promise<void>;
   onDeleteMedia?: (mediaId: number) => void | Promise<void>;
@@ -30,12 +35,13 @@ interface PromotionFormModalProps {
 }
 
 function isCrossValid(title: string, details: CrossPromotionDetails): boolean {
+  const hasCategories = (details.target_partner_category_ids?.length ?? 0) > 0;
   return (
     title.trim().length > 0 &&
     Boolean(details.promotion_type) &&
     Boolean(details.what_i_can_offer?.trim()) &&
     Boolean(details.what_i_expect_in_return?.trim()) &&
-    Boolean(details.target_partner_category?.trim()) &&
+    hasCategories &&
     Boolean(details.target_location?.trim())
   );
 }
@@ -43,9 +49,10 @@ function isCrossValid(title: string, details: CrossPromotionDetails): boolean {
 function isPaidValid(title: string, details: PaidPromotionDetails): boolean {
   const price = details.price ?? {};
   const priceOk = price.is_custom_quote || (price.amount != null && price.amount >= 0);
+  const placement = String(details.placement_type ?? '').trim();
   return (
     title.trim().length > 0 &&
-    Boolean(details.placement_type) &&
+    placement.length > 0 &&
     Boolean(details.available_slots?.trim()) &&
     Boolean(details.duration?.unit) &&
     priceOk
@@ -57,11 +64,15 @@ export function PromotionFormModal({
   category,
   promotion,
   loading = false,
+  submitError = null,
+  fieldErrors = {},
   onClose,
   onSubmit,
   onDeleteMedia,
   deletingMediaId = null,
 }: PromotionFormModalProps) {
+  const modalBodyRef = useRef<HTMLDivElement>(null);
+  const { categories } = useBusinessCategories();
   const [title, setTitle] = useState('');
   const [crossDetails, setCrossDetails] = useState<CrossPromotionDetails>(
     defaultDetailsForCategory('cross') as CrossPromotionDetails,
@@ -86,7 +97,14 @@ export function PromotionFormModal({
     }
   }, [show, promotion, effectiveCategory]);
 
+  useEffect(() => {
+    if (!show || (!submitError && Object.keys(fieldErrors).length === 0)) return;
+    modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [show, submitError, fieldErrors]);
+
   if (!show) return null;
+
+  const fieldErrorLines = formatFieldErrors(fieldErrors);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +114,7 @@ export function PromotionFormModal({
         title: title.trim(),
         details: {
           ...paidDetails,
+          placement_type: String(paidDetails.placement_type ?? '').trim(),
           price: {
             is_custom_quote: Boolean(paidDetails.price?.is_custom_quote),
             amount: paidDetails.price?.is_custom_quote
@@ -108,9 +127,14 @@ export function PromotionFormModal({
       });
     } else {
       if (!isCrossValid(title, crossDetails)) return;
+      const ids = crossDetails.target_partner_category_ids ?? [];
       onSubmit({
         title: title.trim(),
-        details: crossDetails,
+        details: {
+          ...crossDetails,
+          target_partner_category_ids: ids,
+          target_partner_category: categoryLabelsFromIds(categories, ids),
+        },
         files: pendingFiles.map((p) => p.file),
       });
     }
@@ -155,9 +179,23 @@ export function PromotionFormModal({
                 />
               </div>
               <div
+                ref={modalBodyRef}
                 className="modal-body overflow-auto flex-grow-1"
                 style={{ maxHeight: 'calc(100vh - 12rem)' }}
               >
+                {(submitError || fieldErrorLines.length > 0) && (
+                  <div className="alert alert-danger" role="alert">
+                    {submitError && <p className="mb-0 fw-semibold">{submitError}</p>}
+                    {fieldErrorLines.length > 0 && (
+                      <ul className={`mb-0 small ${submitError ? 'mt-2' : ''}`}>
+                        {fieldErrorLines.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {slugPreview && (
                   <p className="small text-muted mb-3">
                     URL slug: <code className="text-body">{slugPreview}</code>

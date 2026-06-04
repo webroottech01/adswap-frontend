@@ -2,6 +2,9 @@
 
 import { CROSS_PROMOTION_TYPE_OPTIONS } from '../constants';
 import type { CrossPromotionDetails } from '../types';
+import { SearchableCategoryChecklist } from '@/features/business/components/SearchableCategoryChecklist';
+import { useBusinessCategories } from '@/features/business/hooks/useBusinessCategories';
+import { LOCATION_RADIUS_OPTIONS } from '@/shared/constants/collaborationPreferences';
 
 interface CrossPromotionFormFieldsProps {
   title: string;
@@ -18,7 +21,13 @@ export function CrossPromotionFormFields({
   onTitleChange,
   onDetailsChange,
 }: CrossPromotionFormFieldsProps) {
+  const { categories, loading: categoriesLoading } = useBusinessCategories();
   const duration = details.available_duration ?? {};
+  const partnerIds = details.target_partner_category_ids ?? [];
+  const legacyCategoryText =
+    !partnerIds.length && details.target_partner_category?.trim()
+      ? details.target_partner_category.trim()
+      : null;
 
   const patch = (patchDetails: Partial<CrossPromotionDetails>) => {
     onDetailsChange({ ...details, ...patchDetails });
@@ -102,37 +111,39 @@ export function CrossPromotionFormFields({
         />
       </div>
 
-      <div className="row">
-        <div className="col-md-6 mb-3">
-          <label htmlFor="targetPartnerCategory" className="form-label">
-            Target partner category <span className="text-danger">*</span>
-          </label>
-          <input
-            id="targetPartnerCategory"
-            type="text"
-            className="form-control"
-            placeholder="e.g. Cafés, salons, gyms"
-            value={details.target_partner_category ?? ''}
-            onChange={(e) => patch({ target_partner_category: e.target.value })}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div className="col-md-6 mb-3">
-          <label htmlFor="targetLocation" className="form-label">
-            Target location <span className="text-danger">*</span>
-          </label>
-          <input
-            id="targetLocation"
-            type="text"
-            className="form-control"
-            placeholder="e.g. Downtown, within 5 km"
-            value={details.target_location ?? ''}
-            onChange={(e) => patch({ target_location: e.target.value })}
-            required
-            disabled={loading}
-          />
-        </div>
+      <SearchableCategoryChecklist
+        label="Target partner category *"
+        categories={categories}
+        value={partnerIds}
+        onChange={(ids) => patch({ target_partner_category_ids: ids })}
+        loading={categoriesLoading || loading}
+      />
+
+      {legacyCategoryText && (
+        <p className="small text-muted mb-3">
+          Previously entered: <em>{legacyCategoryText}</em>. Select categories above to update.
+        </p>
+      )}
+
+      <div className="mb-3">
+        <label htmlFor="targetLocation" className="form-label">
+          Target location <span className="text-danger">*</span>
+        </label>
+        <select
+          id="targetLocation"
+          className="form-select"
+          value={details.target_location ?? ''}
+          onChange={(e) => patch({ target_location: e.target.value })}
+          required
+          disabled={loading}
+        >
+          <option value="">Select radius</option>
+          {LOCATION_RADIUS_OPTIONS.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
       </div>
 
       <fieldset className="mb-3">

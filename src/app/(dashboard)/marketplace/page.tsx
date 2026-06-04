@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { useMarketplace, useMarketplaceFilters } from '@/features/marketplace/hooks';
 import { MarketplaceFilters } from '@/features/marketplace/components/MarketplaceFilters';
 import { MarketplaceGrid } from '@/features/marketplace/components/MarketplaceGrid';
@@ -12,6 +13,7 @@ import { businessApi } from '@/features/business/api';
 import { marketplaceApi } from '@/features/marketplace/api';
 
 export default function MarketplacePage() {
+  const pathname = usePathname();
   const { isAuthenticated } = useAuthSession();
   const [collaborationTarget, setCollaborationTarget] =
     useState<MarketplaceCollaborationTarget | null>(null);
@@ -53,36 +55,31 @@ export default function MarketplacePage() {
     };
   }, [isAuthenticated]);
 
-  useEffect(() => {
+  const loadSavedBookmarks = useCallback(async () => {
     if (!isAuthenticated) {
       setSavedBrandIds(new Set());
       setSavedPromotionIds(new Set());
       return;
     }
 
-    let cancelled = false;
-    (async () => {
-      try {
-        const [brands, promotions] = await Promise.all([
-          marketplaceApi.getSavedBrands(),
-          marketplaceApi.getSavedPromotions(),
-        ]);
-        if (!cancelled) {
-          setSavedBrandIds(new Set(brands.map((b) => b.id)));
-          setSavedPromotionIds(new Set(promotions.map((p) => p.promotion.id)));
-        }
-      } catch {
-        if (!cancelled) {
-          setSavedBrandIds(new Set());
-          setSavedPromotionIds(new Set());
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const [brands, promotions] = await Promise.all([
+        marketplaceApi.getSavedBrands(),
+        marketplaceApi.getSavedPromotions(),
+      ]);
+      setSavedBrandIds(new Set(brands.map((b) => b.id)));
+      setSavedPromotionIds(new Set(promotions.map((p) => p.promotion.id)));
+    } catch {
+      setSavedBrandIds(new Set());
+      setSavedPromotionIds(new Set());
+    }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (pathname === '/marketplace') {
+      loadSavedBookmarks();
+    }
+  }, [pathname, loadSavedBookmarks]);
 
   const handleToggleSaveBrand = async (businessId: number) => {
     if (!isAuthenticated) return;

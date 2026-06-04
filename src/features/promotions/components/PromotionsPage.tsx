@@ -184,7 +184,7 @@ export function PromotionsPage() {
     );
   }
 
-  const displayError = error || mutations.error;
+  const displayError = !modalOpen ? error || mutations.error : null;
   const isPaid = categoryFilter === 'paid';
 
   return (
@@ -286,6 +286,8 @@ export function PromotionsPage() {
         category={categoryFilter}
         promotion={editingPromotion}
         loading={mutations.loading}
+        submitError={mutations.error}
+        fieldErrors={mutations.fieldErrors}
         onClose={() => {
           if (!mutations.loading) {
             setModalOpen(false);
