@@ -64,10 +64,10 @@ export const marketplaceApi = {
   },
 
   async getBusinessPromotions(id: number): Promise<Promotion[]> {
-    const response = await api.get<{ data: Promotion[] }>(
+    const response = await api.get<Promotion[]>(
       `/api/v1/marketplace/businesses/${id}/promotions`,
     );
-    return response.data?.data ?? [];
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   async getPromotionDetail(businessId: number, slug: string): Promise<MarketplacePromotionDetail> {
@@ -78,8 +78,8 @@ export const marketplaceApi = {
   },
 
   async getSavedBrands(): Promise<MarketplaceListing[]> {
-    const response = await api.get<{ data: MarketplaceListing[] }>('/api/v1/marketplace/saved-brands');
-    return response.data?.data ?? [];
+    const response = await api.get<MarketplaceListing[]>('/api/v1/marketplace/saved-brands');
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   async saveBrand(savedBusinessId: number): Promise<void> {
@@ -98,10 +98,8 @@ export const marketplaceApi = {
   },
 
   async getSavedPromotions(): Promise<SavedPromotionItem[]> {
-    const response = await api.get<{ data: SavedPromotionItem[] }>(
-      '/api/v1/marketplace/saved-promotions',
-    );
-    return response.data?.data ?? [];
+    const response = await api.get<SavedPromotionItem[]>('/api/v1/marketplace/saved-promotions');
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   async savePromotion(promotionId: number): Promise<void> {

@@ -1,7 +1,8 @@
 'use client';
 
-import { PAID_DURATION_UNIT_OPTIONS, PAID_PLACEMENT_TYPE_OPTIONS } from '../constants';
+import { PAID_DURATION_UNIT_OPTIONS } from '../constants';
 import type { PaidPromotionDetails } from '../types';
+import { SearchablePlacementTypeInput } from './SearchablePlacementTypeInput';
 
 interface PaidPromotionFormFieldsProps {
   title: string;
@@ -44,27 +45,11 @@ export function PaidPromotionFormFields({
         />
       </div>
 
-      <div className="mb-3">
-        <label htmlFor="placementType" className="form-label">
-          Placement type <span className="text-danger">*</span>
-        </label>
-        <select
-          id="placementType"
-          className="form-select"
-          value={details.placement_type ?? 'counter_display'}
-          onChange={(e) =>
-            patch({ placement_type: e.target.value as PaidPromotionDetails['placement_type'] })
-          }
-          required
-          disabled={loading}
-        >
-          {PAID_PLACEMENT_TYPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SearchablePlacementTypeInput
+        value={details.placement_type ?? ''}
+        onChange={(placement_type) => patch({ placement_type })}
+        disabled={loading}
+      />
 
       <fieldset className="mb-3 border rounded p-3">
         <legend className="form-label fs-6 mb-2">Price</legend>

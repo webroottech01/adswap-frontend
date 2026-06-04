@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { promotionsApi, extractMessage } from './api';
+import { promotionsApi, extractMessage, extractApiError } from './api';
 import type {
   CreatePromotionPayload,
   Promotion,
@@ -42,18 +42,25 @@ export function usePromotions(
 export function usePromotionMutations(options?: { onSuccess?: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  const clearError = () => setError(null);
+  const clearError = () => {
+    setError(null);
+    setFieldErrors({});
+  };
 
   const wrap = async <T>(fn: () => Promise<T>): Promise<T | null> => {
     setLoading(true);
     setError(null);
+    setFieldErrors({});
     try {
       const result = await fn();
       options?.onSuccess?.();
       return result;
     } catch (err) {
-      setError(extractMessage(err));
+      const parsed = extractApiError(err);
+      setError(parsed.message);
+      setFieldErrors(parsed.fieldErrors);
       return null;
     } finally {
       setLoading(false);
@@ -95,6 +102,7 @@ export function usePromotionMutations(options?: { onSuccess?: () => void }) {
   return {
     loading,
     error,
+    fieldErrors,
     clearError,
     create,
     update,

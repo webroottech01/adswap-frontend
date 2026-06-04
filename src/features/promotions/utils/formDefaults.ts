@@ -10,6 +10,7 @@ export function defaultCrossDetails(): CrossPromotionDetails {
     promotion_type: 'coupon_exchange',
     what_i_can_offer: '',
     what_i_expect_in_return: '',
+    target_partner_category_ids: [],
     target_partner_category: '',
     target_location: '',
     available_duration: {},

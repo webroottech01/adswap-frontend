@@ -36,16 +36,7 @@ export const BUDGET_RANGE_OPTIONS = [
   '₹50,000+',
 ];
 
-export const LOCATION_RADIUS_OPTIONS = [
-  'Same locality',
-  '5 km',
-  '10 km',
-  '25 km',
-  '50 km',
-  'City-wide',
-  'State-wide',
-  'Pan India',
-];
+export { LOCATION_RADIUS_OPTIONS } from '@/shared/constants/collaborationPreferences';
 
 export const BUSINESS_TYPE_OPTIONS = [
   { value: 'individual', label: 'Individual' },

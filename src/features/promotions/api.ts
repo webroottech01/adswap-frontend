@@ -8,12 +8,47 @@ import type {
   UpdatePromotionPayload,
 } from './types';
 
-function extractMessage(error: unknown): string {
+export interface PromotionApiError {
+  message: string;
+  fieldErrors: Record<string, string[]>;
+}
+
+const FIELD_ERROR_LABELS: Record<string, string> = {
+  'details.target_partner_category_ids': 'Target partner category',
+  'details.target_location': 'Target location',
+  'details.placement_type': 'Placement type',
+  'details.what_i_can_offer': 'What I can offer',
+  'details.what_i_expect_in_return': 'What I expect in return',
+  title: 'Title',
+};
+
+function parseAxiosData(data: unknown): { message: string; fieldErrors: Record<string, string[]> } {
+  const body = data as { message?: string; errors?: Record<string, string[]> } | undefined;
+  const fieldErrors = body?.errors && typeof body.errors === 'object' ? body.errors : {};
+  const message =
+    body?.message ||
+    (Object.keys(fieldErrors).length > 0 ? 'Please fix the errors below.' : 'Request failed');
+  return { message, fieldErrors };
+}
+
+export function extractApiError(error: unknown): PromotionApiError {
   if (error && typeof error === 'object' && 'response' in error) {
-    const axiosError = error as { response?: { data?: { message?: string } } };
-    return axiosError.response?.data?.message || 'Request failed';
+    const axiosError = error as { response?: { data?: unknown } };
+    const parsed = parseAxiosData(axiosError.response?.data);
+    return { message: parsed.message, fieldErrors: parsed.fieldErrors };
   }
-  return 'Request failed';
+  return { message: 'Request failed', fieldErrors: {} };
+}
+
+function extractMessage(error: unknown): string {
+  return extractApiError(error).message;
+}
+
+export function formatFieldErrors(fieldErrors: Record<string, string[]>): string[] {
+  return Object.entries(fieldErrors).flatMap(([key, messages]) => {
+    const label = FIELD_ERROR_LABELS[key] ?? key.replace(/^details\./, '').replace(/_/g, ' ');
+    return messages.map((m) => `${label}: ${m}`);
+  });
 }
 
 export const promotionsApi = {

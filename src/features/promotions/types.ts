@@ -31,6 +31,7 @@ export interface CrossPromotionDetails {
   promotion_type?: CrossPromotionType;
   what_i_can_offer?: string;
   what_i_expect_in_return?: string;
+  target_partner_category_ids?: number[];
   target_partner_category?: string;
   target_location?: string;
   available_duration?: CrossAvailableDuration;
@@ -49,7 +50,7 @@ export interface PaidDuration {
 }
 
 export interface PaidPromotionDetails {
-  placement_type?: PaidPlacementType;
+  placement_type?: PaidPlacementType | string;
   price?: PaidPrice;
   duration?: PaidDuration;
   available_slots?: string;
