@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { ConversationListItem, ConversationsMeta } from '../types';
+import { displayConversationTitle } from '../utils/conversationTitle';
 import { ConversationsSidebarSkeleton } from './ConversationsSidebarSkeleton';
 
 interface ConversationsSidebarProps {
@@ -56,9 +57,12 @@ export function ConversationsSidebar({
                     activeId === conversation.id ? 'text-white' : 'text-body'
                   }`}
                 >
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <span className="fw-semibold">
-                      {conversation.partner_business_name ?? `Conversation #${conversation.id}`}
+                  <div className="d-flex justify-content-between align-items-center mb-1 gap-2">
+                    <span
+                      className="fw-semibold text-truncate min-w-0 flex-grow-1"
+                      title={displayConversationTitle(conversation)}
+                    >
+                      {displayConversationTitle(conversation)}
                     </span>
                     <span className="small text-muted">
                       {new Date(conversation.updated_at).toLocaleDateString()}

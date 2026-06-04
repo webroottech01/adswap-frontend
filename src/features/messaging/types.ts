@@ -5,6 +5,7 @@ export interface Conversation {
   business_two_id: number;
   created_at: string;
   updated_at: string;
+  conversation_title?: string | null;
 }
 
 export interface ConversationListItem extends Conversation {

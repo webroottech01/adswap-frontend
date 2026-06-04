@@ -8,4 +8,5 @@ export * from './components/MessageInput';
 export type { MessageSendPayload } from './components/MessageInput';
 export * from './components/ConversationsSidebarSkeleton';
 export * from './components/ChatWindowSkeleton';
+export { displayConversationTitle } from './utils/conversationTitle';
 

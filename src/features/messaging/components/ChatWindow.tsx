@@ -12,7 +12,7 @@ interface ChatWindowProps {
   loading: boolean;
   error: string | null;
   currentBusinessId?: number | null;
-  partnerBusinessName?: string | null;
+  conversationTitle?: string | null;
   onFilesDropped?: (files: File[]) => void;
   isDragOver?: boolean;
 }
@@ -77,7 +77,7 @@ export function ChatWindow({
   loading,
   error,
   currentBusinessId,
-  partnerBusinessName,
+  conversationTitle,
   onFilesDropped,
   isDragOver = false,
 }: ChatWindowProps) {
@@ -113,8 +113,13 @@ export function ChatWindow({
           <span className="text-primary fw-semibold">Drop files to attach</span>
         </div>
       )}
-      <div className="card-header d-flex justify-content-between align-items-center">
-        <h2 className="h6 mb-0">{partnerBusinessName ?? 'Messages'}</h2>
+      <div className="card-header d-flex justify-content-between align-items-center min-w-0">
+        <h2
+          className="h6 mb-0 text-truncate flex-grow-1 min-w-0"
+          title={conversationTitle ?? undefined}
+        >
+          {conversationTitle ?? 'Messages'}
+        </h2>
       </div>
       <div
         className="card-body flex-grow-1"
