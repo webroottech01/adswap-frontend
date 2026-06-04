@@ -41,10 +41,10 @@ export function BusinessCardPreview({ data }: BusinessCardPreviewProps) {
         </div>
 
         <div className="mb-3">
-          {data.location && (
+          {(data.city || data.area || data.location) && (
             <div className="d-flex align-items-center text-muted mb-2">
               <MapPin size={16} className="me-2" />
-              <small>{data.location}</small>
+              <small>{[data.area, data.city].filter(Boolean).join(', ') || data.location}</small>
             </div>
           )}
           {data.businessType && (
@@ -61,26 +61,20 @@ export function BusinessCardPreview({ data }: BusinessCardPreviewProps) {
 
         {data.providesAdServices && (
           <div className="border-top pt-3">
-            <h6 className="small fw-bold mb-2">Ad Services Offered:</h6>
-            <div className="d-flex flex-wrap gap-2">
-              {(data.serviceSlugs || []).length > 0 ? (
-                data.serviceSlugs?.map((slug) => (
-                  <span key={slug} className="badge bg-info">
-                    {slug}
-                  </span>
-                ))
-              ) : (
-                <small className="text-muted">No services selected</small>
-              )}
-            </div>
+            <h6 className="small fw-bold mb-2">Promotion Intent:</h6>
+            <span className="badge bg-info text-capitalize">{data.promotionIntent || 'cross'}</span>
+            {(data.supportedCategoryIds || []).length > 0 && (
+              <small className="text-muted d-block mt-1">{data.supportedCategoryIds?.length} categories selected</small>
+            )}
           </div>
         )}
 
-        {data.brandProofs && data.brandProofs.length > 0 && (
+        {(data.logoFile || (data.brandAssets && data.brandAssets.length > 0)) && (
           <div className="border-top pt-3 mt-3">
-            <h6 className="small fw-bold mb-2">Brand Proof:</h6>
+            <h6 className="small fw-bold mb-2">Brand Assets:</h6>
             <small className="text-muted">
-              {data.brandProofs.length} file(s) uploaded
+              {data.logoFile ? 'Logo selected' : ''}
+              {data.brandAssets?.length ? ` · ${data.brandAssets.length} additional file(s)` : ''}
             </small>
           </div>
         )}

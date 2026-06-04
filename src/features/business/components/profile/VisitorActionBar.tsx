@@ -13,6 +13,9 @@ interface VisitorActionBarProps {
   onMessage?: () => void;
   onCollaborate: () => void;
   onToggleSave: () => void;
+  promotionSaved?: boolean;
+  savePromotionLoading?: boolean;
+  onToggleSavePromotion?: () => void;
   onLoginRequired?: () => void;
 }
 
@@ -26,6 +29,9 @@ export function VisitorActionBar({
   onMessage,
   onCollaborate,
   onToggleSave,
+  promotionSaved = false,
+  savePromotionLoading = false,
+  onToggleSavePromotion,
   onLoginRequired,
 }: VisitorActionBarProps) {
   if (isOwnBusiness) {
@@ -81,6 +87,18 @@ export function VisitorActionBar({
           >
             {saved ? 'Saved' : 'Save brand'}
           </Button>
+          {onToggleSavePromotion && (
+            <Button
+              variant={promotionSaved ? 'success' : 'secondary'}
+              outline={!promotionSaved}
+              size="sm"
+              icon={promotionSaved ? BookmarkCheck : Bookmark}
+              onClick={() => requireAuth(onToggleSavePromotion)}
+              loading={savePromotionLoading}
+            >
+              {promotionSaved ? 'Saved' : 'Save promotion'}
+            </Button>
+          )}
         </div>
       </div>
     </div>

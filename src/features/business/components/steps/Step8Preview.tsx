@@ -1,7 +1,7 @@
 'use client';
 
 import { UseFormReturn } from 'react-hook-form';
-import { BusinessFormData } from '../../types';
+import { BusinessFormData, CompletionSection } from '../../types';
 import { BusinessCardPreview } from '../BusinessCardPreview';
 import { Edit } from 'lucide-react';
 import { Button } from '@/ui/Button';
@@ -9,13 +9,31 @@ import { Button } from '@/ui/Button';
 interface Step8PreviewProps {
   form: UseFormReturn<BusinessFormData>;
   onEditStep: (step: number) => void;
+  completionPercentage?: number;
+  completionSections?: CompletionSection[];
+  onSaveDraft?: () => Promise<{ success: boolean } | undefined>;
+  onSubmit?: () => Promise<void>;
+  onPublish?: () => Promise<void>;
+  isSubmitting?: boolean;
+  isSavingDraft?: boolean;
 }
 
 /**
  * Step 8: Preview (read-only)
  */
-export function Step8Preview({ form, onEditStep }: Step8PreviewProps) {
+export function Step8Preview({
+  form,
+  onEditStep,
+  completionPercentage = 0,
+  completionSections = [],
+  onSaveDraft,
+  onSubmit,
+  onPublish,
+  isSubmitting,
+  isSavingDraft,
+}: Step8PreviewProps) {
   const data = form.getValues();
+  const missingAlerts = completionSections.filter((s) => s.missing_fields.length > 0);
 
   const getBusinessTypeLabel = (type: string) => {
     switch (type) {
@@ -37,9 +55,15 @@ export function Step8Preview({ form, onEditStep }: Step8PreviewProps) {
           <h5 className="mb-0">Review Your Business Profile</h5>
         </div>
         <div className="card-body">
-          <p className="text-muted mb-4">
-            Please review all the information below. You can edit any section by clicking the edit button.
+          <p className="text-muted mb-2">
+            Profile completion: <strong>{completionPercentage}%</strong>. Review each section before submitting.
           </p>
+          {missingAlerts.length > 0 && (
+            <div className="alert alert-warning small">
+              <strong>Missing information:</strong>{' '}
+              {missingAlerts.map((s) => s.label).join(', ')}
+            </div>
+          )}
 
           {/* Business Card Preview */}
           <div className="mb-4">
@@ -149,13 +173,15 @@ export function Step8Preview({ form, onEditStep }: Step8PreviewProps) {
                     <div>{data.isBuyer ? 'Yes' : 'No'}</div>
                   </div>
                   <div className="mb-2">
-                    <strong>Selected Services:</strong>
-                    <div>
-                      {data.serviceSlugs && data.serviceSlugs.length > 0
-                        ? data.serviceSlugs.join(', ')
-                        : 'None'}
-                    </div>
+                    <strong>Promotion Intent:</strong>
+                    <div className="text-capitalize">{data.promotionIntent || 'none'}</div>
                   </div>
+                  {(data.supportedCategoryIds?.length ?? 0) > 0 && (
+                    <div>
+                      <strong>Supported Categories:</strong>
+                      <div>{data.supportedCategoryIds?.length} selected</div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -271,11 +297,11 @@ export function Step8Preview({ form, onEditStep }: Step8PreviewProps) {
             )}
 
             {/* Step 6: Brand Proof */}
-            {data.brandProofs && data.brandProofs.length > 0 && (
+            {(data.logoFile || (data.brandAssets && data.brandAssets.length > 0)) && (
               <div className="col-12 col-md-6">
                 <div className="card h-100">
                   <div className="card-header d-flex align-items-center justify-content-between">
-                    <h6 className="mb-0">Brand Proof</h6>
+                    <h6 className="mb-0">Brand Assets</h6>
                     <Button
                       variant="secondary"
                       size="sm"
@@ -290,7 +316,7 @@ export function Step8Preview({ form, onEditStep }: Step8PreviewProps) {
                     <div>
                       <strong>Files:</strong>
                       <div className="text-muted small">
-                        {data.brandProofs.length} file(s) uploaded
+                        {data.logoFile ? 'Logo' : ''}{data.brandAssets?.length ? ` ${data.brandAssets.length} asset(s)` : ''}
                       </div>
                     </div>
                   </div>
@@ -333,6 +359,24 @@ export function Step8Preview({ form, onEditStep }: Step8PreviewProps) {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="d-flex flex-wrap gap-2 justify-content-end mt-4 border-top pt-3">
+        {onSaveDraft && (
+          <Button variant="secondary" outline onClick={onSaveDraft} disabled={isSavingDraft}>
+            {isSavingDraft ? 'Saving...' : 'Save Draft'}
+          </Button>
+        )}
+        {onSubmit && (
+          <Button variant="primary" onClick={onSubmit} disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit for Review'}
+          </Button>
+        )}
+        {onPublish && (
+          <Button variant="primary" outline onClick={onPublish} disabled={isSubmitting}>
+            Publish Profile
+          </Button>
+        )}
       </div>
     </div>
   );

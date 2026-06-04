@@ -8,6 +8,8 @@ import {
   MarketplaceFilterMetadata,
   MarketplacePromotionDetail,
   SavedBrandCheck,
+  SavedPromotionCheck,
+  SavedPromotionItem,
 } from './types';
 
 export interface PaginatedResponse<T> {
@@ -91,6 +93,28 @@ export const marketplaceApi = {
   async checkSavedBrand(businessId: number): Promise<boolean> {
     const response = await api.get<SavedBrandCheck>(
       `/api/v1/marketplace/saved-brands/check/${businessId}`,
+    );
+    return response.data?.saved ?? false;
+  },
+
+  async getSavedPromotions(): Promise<SavedPromotionItem[]> {
+    const response = await api.get<{ data: SavedPromotionItem[] }>(
+      '/api/v1/marketplace/saved-promotions',
+    );
+    return response.data?.data ?? [];
+  },
+
+  async savePromotion(promotionId: number): Promise<void> {
+    await api.post('/api/v1/marketplace/saved-promotions', { promotion_id: promotionId });
+  },
+
+  async unsavePromotion(promotionId: number): Promise<void> {
+    await api.delete(`/api/v1/marketplace/saved-promotions/${promotionId}`);
+  },
+
+  async checkSavedPromotion(promotionId: number): Promise<boolean> {
+    const response = await api.get<SavedPromotionCheck>(
+      `/api/v1/marketplace/saved-promotions/check/${promotionId}`,
     );
     return response.data?.saved ?? false;
   },

@@ -13,6 +13,12 @@ interface MarketplaceCardProps {
   isAuthenticated?: boolean;
   myBusinessId?: number | null;
   onCollaborateClick?: (target: MarketplaceCollaborationTarget) => void;
+  brandSaved?: boolean;
+  promotionSaved?: boolean;
+  onToggleSaveBrand?: () => void;
+  onToggleSavePromotion?: () => void;
+  saveBrandLoading?: boolean;
+  savePromotionLoading?: boolean;
 }
 
 export function MarketplaceCard({
@@ -21,6 +27,12 @@ export function MarketplaceCard({
   isAuthenticated,
   myBusinessId,
   onCollaborateClick,
+  brandSaved,
+  promotionSaved,
+  onToggleSaveBrand,
+  onToggleSavePromotion,
+  saveBrandLoading,
+  savePromotionLoading,
 }: MarketplaceCardProps) {
   const router = useRouter();
   const isOwnListing = myBusinessId != null && myBusinessId === listing.id;
@@ -73,6 +85,12 @@ export function MarketplaceCard({
           showActions={showActions}
           onView={handleView}
           onCollaborate={showActions && onCollaborateClick ? handleCollaborate : undefined}
+          brandSaved={brandSaved}
+          promotionSaved={promotionSaved}
+          onToggleSaveBrand={showActions ? onToggleSaveBrand : undefined}
+          onToggleSavePromotion={showActions ? onToggleSavePromotion : undefined}
+          saveBrandLoading={saveBrandLoading}
+          savePromotionLoading={savePromotionLoading}
         />
       </div>
     </Card>

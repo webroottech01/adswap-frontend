@@ -9,6 +9,7 @@ import { CollaborationModal, useSendRequest } from '@/features/collaboration';
 import type { MarketplaceCollaborationTarget } from '@/features/marketplace/types';
 import type { SendCollaborationPayload } from '@/features/collaboration/types';
 import { businessApi } from '@/features/business/api';
+import { marketplaceApi } from '@/features/marketplace/api';
 
 export default function MarketplacePage() {
   const { isAuthenticated } = useAuthSession();
@@ -17,12 +18,17 @@ export default function MarketplacePage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [collaborationError, setCollaborationError] = useState<string | null>(null);
   const [myBusinessId, setMyBusinessId] = useState<number | null>(null);
+  const [savedBrandIds, setSavedBrandIds] = useState<Set<number>>(new Set());
+  const [savedPromotionIds, setSavedPromotionIds] = useState<Set<number>>(new Set());
+  const [saveBrandLoadingId, setSaveBrandLoadingId] = useState<number | null>(null);
+  const [savePromotionLoadingId, setSavePromotionLoadingId] = useState<number | null>(null);
 
   const {
     filters,
     metadata,
     metadataLoading,
     updateFilters,
+    resetFilters,
     setPage,
   } = useMarketplaceFilters();
 
@@ -46,6 +52,81 @@ export default function MarketplacePage() {
       cancelled = true;
     };
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setSavedBrandIds(new Set());
+      setSavedPromotionIds(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const [brands, promotions] = await Promise.all([
+          marketplaceApi.getSavedBrands(),
+          marketplaceApi.getSavedPromotions(),
+        ]);
+        if (!cancelled) {
+          setSavedBrandIds(new Set(brands.map((b) => b.id)));
+          setSavedPromotionIds(new Set(promotions.map((p) => p.promotion.id)));
+        }
+      } catch {
+        if (!cancelled) {
+          setSavedBrandIds(new Set());
+          setSavedPromotionIds(new Set());
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
+  const handleToggleSaveBrand = async (businessId: number) => {
+    if (!isAuthenticated) return;
+    setSaveBrandLoadingId(businessId);
+    try {
+      if (savedBrandIds.has(businessId)) {
+        await marketplaceApi.unsaveBrand(businessId);
+        setSavedBrandIds((prev) => {
+          const next = new Set(prev);
+          next.delete(businessId);
+          return next;
+        });
+      } else {
+        await marketplaceApi.saveBrand(businessId);
+        setSavedBrandIds((prev) => new Set(prev).add(businessId));
+      }
+    } catch {
+      setCollaborationError('Could not update saved brand.');
+    } finally {
+      setSaveBrandLoadingId(null);
+    }
+  };
+
+  const handleToggleSavePromotion = async (promotionId: number) => {
+    if (!isAuthenticated) return;
+    setSavePromotionLoadingId(promotionId);
+    try {
+      if (savedPromotionIds.has(promotionId)) {
+        await marketplaceApi.unsavePromotion(promotionId);
+        setSavedPromotionIds((prev) => {
+          const next = new Set(prev);
+          next.delete(promotionId);
+          return next;
+        });
+      } else {
+        await marketplaceApi.savePromotion(promotionId);
+        setSavedPromotionIds((prev) => new Set(prev).add(promotionId));
+      }
+    } catch {
+      setCollaborationError('Could not update saved promotion.');
+    } finally {
+      setSavePromotionLoadingId(null);
+    }
+  };
 
   const { listings: rawListings, loading, error, pagination } = useMarketplace(filters);
 
@@ -128,6 +209,7 @@ export default function MarketplacePage() {
         metadata={metadata}
         metadataLoading={metadataLoading}
         onFiltersChange={updateFilters}
+        onClearFilters={resetFilters}
       />
 
       <MarketplaceGrid
@@ -138,6 +220,12 @@ export default function MarketplacePage() {
         isAuthenticated={isAuthenticated}
         myBusinessId={myBusinessId}
         onCollaborateClick={handleCollaborateClick}
+        savedBrandIds={savedBrandIds}
+        savedPromotionIds={savedPromotionIds}
+        onToggleSaveBrand={isAuthenticated ? handleToggleSaveBrand : undefined}
+        onToggleSavePromotion={isAuthenticated ? handleToggleSavePromotion : undefined}
+        saveBrandLoadingId={saveBrandLoadingId}
+        savePromotionLoadingId={savePromotionLoadingId}
       />
 
       {collaborationTarget != null && (

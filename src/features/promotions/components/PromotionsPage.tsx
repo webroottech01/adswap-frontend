@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { businessApi } from '@/features/business/api';
+import { businessApi, Business } from '@/features/business/api';
 import { promotionsApi } from '../api';
 import { usePromotionMutations, usePromotions } from '../hooks';
 import type {
@@ -33,6 +33,7 @@ const STATUS_TABS: { key: PromotionStatusFilter; label: string }[] = [
 export function PromotionsPage() {
   const [categoryFilter, setCategoryFilter] = useState<PromotionCategory>('cross');
   const [statusFilter, setStatusFilter] = useState<PromotionStatusFilter>('all');
+  const [myBusiness, setMyBusiness] = useState<Business | null>(null);
   const [hasBusiness, setHasBusiness] = useState<boolean | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
@@ -50,9 +51,34 @@ export function PromotionsPage() {
   useEffect(() => {
     businessApi
       .getMyBusiness()
-      .then(() => setHasBusiness(true))
-      .catch(() => setHasBusiness(false));
+      .then((b) => {
+        setMyBusiness(b);
+        setHasBusiness(true);
+      })
+      .catch(() => {
+        setMyBusiness(null);
+        setHasBusiness(false);
+      });
   }, []);
+
+  const canCreatePromotions =
+    Boolean(myBusiness?.is_provider) &&
+    myBusiness?.promotion_intent !== 'none' &&
+    myBusiness?.promotion_intent != null;
+
+  const visibleCategoryTabs = useMemo(() => {
+    const intent = myBusiness?.promotion_intent;
+    if (!intent || intent === 'none') return [];
+    if (intent === 'cross') return CATEGORY_TABS.filter((t) => t.key === 'cross');
+    if (intent === 'paid') return CATEGORY_TABS.filter((t) => t.key === 'paid');
+    return CATEGORY_TABS;
+  }, [myBusiness?.promotion_intent]);
+
+  useEffect(() => {
+    if (visibleCategoryTabs.length > 0 && !visibleCategoryTabs.some((t) => t.key === categoryFilter)) {
+      setCategoryFilter(visibleCategoryTabs[0].key);
+    }
+  }, [visibleCategoryTabs, categoryFilter]);
 
   const openCreate = () => {
     setEditingPromotion(null);
@@ -122,6 +148,24 @@ export function PromotionsPage() {
     );
   }
 
+  if (hasBusiness && !canCreatePromotions) {
+    return (
+      <div className="container-fluid py-4">
+        <h1 className="h3 mb-3">Promotions</h1>
+        <div className="card">
+          <div className="card-body text-center py-5">
+            <p className="text-muted mb-3">
+              Complete your Promotion Intent in your business profile to offer cross or paid promotions.
+            </p>
+            <Link href="/business" className="btn btn-primary">
+              Update Business Profile
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (hasBusiness === false) {
     return (
       <div className="container-fluid py-4">
@@ -154,10 +198,12 @@ export function PromotionsPage() {
               : 'Cross-promotion opportunities you offer to partner businesses.'}
           </p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={openCreate}>
-          <Plus size={18} className="me-1" />
-          {isPaid ? 'Create paid package' : 'Create cross promotion'}
-        </button>
+        {canCreatePromotions && (
+          <button type="button" className="btn btn-primary" onClick={openCreate}>
+            <Plus size={18} className="me-1" />
+            {isPaid ? 'Create paid package' : 'Create cross promotion'}
+          </button>
+        )}
       </div>
 
       {displayError && (
@@ -173,7 +219,7 @@ export function PromotionsPage() {
       )}
 
       <ul className="nav nav-pills mb-3 gap-2">
-        {CATEGORY_TABS.map((tab) => (
+        {visibleCategoryTabs.map((tab) => (
           <li key={tab.key} className="nav-item">
             <button
               type="button"

@@ -11,7 +11,7 @@ import { marketplaceApi } from '@/features/marketplace/api';
 import { MarketplaceBusinessSummaryHeader } from '@/features/marketplace/components/MarketplaceBusinessSummaryHeader';
 import type { MarketplacePromotionDetail } from '@/features/marketplace/types';
 import { PromotionContentPreview } from '@/features/promotions/components/PromotionContentPreview';
-import { CollaborationModal, useSendRequest } from '@/features/collaboration';
+import { CollaborationModal, useSendRequest, collaborationApi } from '@/features/collaboration';
 import type { SendCollaborationPayload } from '@/features/collaboration/types';
 
 export default function MarketplacePromotionDetailPage() {
@@ -27,7 +27,10 @@ export default function MarketplacePromotionDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [myBusinessId, setMyBusinessId] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
+  const [promotionSaved, setPromotionSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [savePromotionLoading, setSavePromotionLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<number | null>(null);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -75,6 +78,8 @@ export default function MarketplacePromotionDetailPage() {
     if (!isAuthenticated) {
       setMyBusinessId(null);
       setSaved(false);
+      setPromotionSaved(false);
+      setConversationId(null);
       return;
     }
 
@@ -94,12 +99,44 @@ export default function MarketplacePromotionDetailPage() {
       } catch {
         if (!cancelled) setSaved(false);
       }
+
+      try {
+        const ctx = await collaborationApi.getContext(businessId);
+        if (!cancelled && ctx.can_message && ctx.conversation_id) {
+          setConversationId(ctx.conversation_id);
+        } else if (!cancelled) {
+          setConversationId(null);
+        }
+      } catch {
+        if (!cancelled) setConversationId(null);
+      }
     })();
 
     return () => {
       cancelled = true;
     };
   }, [isAuthenticated, businessId]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !detail?.promotion?.id) {
+      setPromotionSaved(false);
+      return;
+    }
+
+    let cancelled = false;
+    marketplaceApi
+      .checkSavedPromotion(detail.promotion.id)
+      .then((isSaved) => {
+        if (!cancelled) setPromotionSaved(isSaved);
+      })
+      .catch(() => {
+        if (!cancelled) setPromotionSaved(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, detail?.promotion?.id]);
 
   const { send, loading: sendLoading, error: sendError, clearError } = useSendRequest({
     onSuccess: () => {
@@ -128,6 +165,25 @@ export default function MarketplacePromotionDetailPage() {
       setActionError('Could not update saved brand. Make sure you have a business profile.');
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const handleToggleSavePromotion = async () => {
+    if (!isAuthenticated || isOwnBusiness || !detail?.promotion) return;
+    setSavePromotionLoading(true);
+    setActionError(null);
+    try {
+      if (promotionSaved) {
+        await marketplaceApi.unsavePromotion(detail.promotion.id);
+        setPromotionSaved(false);
+      } else {
+        await marketplaceApi.savePromotion(detail.promotion.id);
+        setPromotionSaved(true);
+      }
+    } catch {
+      setActionError('Could not update saved promotion.');
+    } finally {
+      setSavePromotionLoading(false);
     }
   };
 
@@ -203,9 +259,16 @@ export default function MarketplacePromotionDetailPage() {
         businessName={business.name}
         saved={saved}
         saveLoading={saveLoading}
+        promotionSaved={promotionSaved}
+        savePromotionLoading={savePromotionLoading}
         collaborateLoading={sendLoading}
         isOwnBusiness={isOwnBusiness}
         isAuthenticated={isAuthenticated}
+        onMessage={
+          conversationId != null
+            ? () => router.push(`/messages/${conversationId}`)
+            : undefined
+        }
         onCollaborate={() => {
           if (!isAuthenticated) {
             handleLoginRequired();
@@ -215,6 +278,7 @@ export default function MarketplacePromotionDetailPage() {
           clearError();
         }}
         onToggleSave={handleToggleSave}
+        onToggleSavePromotion={handleToggleSavePromotion}
         onLoginRequired={handleLoginRequired}
       />
 

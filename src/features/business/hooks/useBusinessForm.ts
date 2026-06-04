@@ -1,166 +1,239 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { BusinessFormData, businessFormSchema, step1Schema, step2Schema, TOTAL_STEPS } from '../types';
+import {
+  BusinessFormData,
+  businessFormSchema,
+  step2Schema,
+  TOTAL_STEPS,
+  STEP_FIELD_MAP,
+  OPTIONAL_STEPS,
+} from '../types';
 import { businessApi, Business } from '../api';
-import { transformFormToCreateData, transformFormToUpdateData, transformBusinessToFormData } from '../utils/formTransformers';
-import { useServices } from './useServices';
+import { transformFormToUpdateData, transformBusinessToFormData } from '../utils/formTransformers';
 
 const STORAGE_KEY = 'business_form_data';
 
-/**
- * Hook for managing multi-step business form state
- */
 export const useBusinessForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [maxReachableStep, setMaxReachableStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [existingBusiness, setExistingBusiness] = useState<Business | null>(null);
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
+  const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [completionSections, setCompletionSections] = useState<Business['completion_sections']>([]);
+  const [uploadRevision, setUploadRevision] = useState(0);
 
-  const { enabledServices } = useServices();
-
-  // Initialize form with react-hook-form
   const form: UseFormReturn<BusinessFormData> = useForm<BusinessFormData>({
     resolver: zodResolver(businessFormSchema),
     defaultValues: {
       name: '',
       category: '',
-      location: '',
+      city: '',
+      area: '',
+      contactPerson: '',
+      email: '',
+      phone: '',
       businessType: 'individual',
-      registrationNumber: '',
-      foundedYear: undefined,
-      description: '',
       providesAdServices: false,
       isBuyer: true,
-      serviceSlugs: [],
-      collaborationPreferences: undefined,
-      scale: undefined,
-      employeeCount: undefined,
-      annualRevenueRange: undefined,
+      promotionIntent: 'none',
+      supportedCategoryIds: [],
       targetAudience: [],
-      industryExperienceYears: undefined,
       keyProductsServices: [],
       geographicReach: [],
-      socialMediaHandles: undefined,
-      additionalInfo: '',
       preferredCollaborationTypes: [],
-      budgetRange: undefined,
-      collaborationNotes: '',
-      brandProofs: [],
-      businessDocuments: [],
-      documentType: undefined,
+      preferredPartnerCategoryIds: [],
     },
     mode: 'onChange',
   });
 
-  // Load form data from localStorage on mount
+  const applyBusinessToForm = useCallback(
+    (business: Business) => {
+      setExistingBusiness(business);
+      setCompletionPercentage(business.profile_completion_percentage ?? 0);
+      setCompletionSections(business.completion_sections ?? []);
+      const step = Math.max(1, Math.min(TOTAL_STEPS, business.onboarding_step ?? 1));
+      setCurrentStep(step);
+      setMaxReachableStep(Math.max(step, business.onboarding_completed_at ? TOTAL_STEPS : step));
+
+      const formData = transformBusinessToFormData(business);
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined) {
+          form.setValue(key as keyof BusinessFormData, value as never);
+        }
+      });
+    },
+    [form]
+  );
+
   useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
-    if (savedData) {
+    if (savedData && !existingBusiness) {
       try {
         const parsed = JSON.parse(savedData);
-        // Restore form values (excluding File objects which can't be serialized)
         Object.keys(parsed).forEach((key) => {
-          if (key !== 'brandProofs' && key !== 'businessDocuments') {
+          if (!['logoFile', 'brandAssets', 'businessDocuments'].includes(key)) {
             form.setValue(key as keyof BusinessFormData, parsed[key]);
           }
         });
-      } catch (error) {
-        console.error('Failed to load saved form data:', error);
+      } catch {
+        /* ignore */
       }
     }
-  }, [form]);
+  }, [form, existingBusiness]);
 
-  // Auto-load existing business on mount
   useEffect(() => {
     loadExistingBusiness();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array - only run on mount
+  }, []);
 
-  // Save form data to localStorage on change
   useEffect(() => {
     const subscription = form.watch((data) => {
-      // Only save non-File fields to localStorage
       const dataToSave = { ...data };
-      delete dataToSave.brandProofs;
+      delete dataToSave.logoFile;
+      delete dataToSave.brandAssets;
       delete dataToSave.businessDocuments;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     });
     return () => subscription.unsubscribe();
   }, [form]);
 
-  /**
-   * Validate current step and move to next
-   */
+  const uploadPendingFiles = async (business: Business | null): Promise<Business | null> => {
+    if (!business) return null;
+
+    const values = form.getValues();
+    let current = business;
+    let didUpload = false;
+
+    if (values.logoFile) {
+      current = await businessApi.uploadLogo(values.logoFile);
+      form.setValue('logoFile', undefined);
+      didUpload = true;
+    }
+
+    if (values.brandAssets && values.brandAssets.length > 0) {
+      current = await businessApi.uploadAssets(values.brandAssets, 'outlet_image');
+      form.setValue('brandAssets', []);
+      didUpload = true;
+    }
+
+    if (values.businessDocuments && values.businessDocuments.length > 0 && values.documentType) {
+      current = await businessApi.uploadDocument(values.businessDocuments[0], values.documentType);
+      form.setValue('businessDocuments', []);
+      didUpload = true;
+    }
+
+    if (didUpload) {
+      setUploadRevision((v) => v + 1);
+    }
+
+    return current;
+  };
+
+  const persistDraft = async (step: number) => {
+    const formData = form.getValues();
+    const payload = transformFormToUpdateData(formData, step);
+
+    let business: Business | null = existingBusiness;
+
+    if (business) {
+      business = await businessApi.saveDraft(payload);
+    } else if (formData.name?.length >= 2) {
+      business = await businessApi.createDraft(formData.name, step);
+      business = await businessApi.saveDraft(transformFormToUpdateData(formData, step));
+    }
+
+    if (business) {
+      business = await uploadPendingFiles(business);
+      if (business) {
+        applyBusinessToForm(business);
+        setExistingBusiness(business);
+      }
+    }
+
+    return business;
+  };
+
+  const validateStep = async (step: number): Promise<boolean> => {
+    if (step === 2) {
+      const values = form.getValues();
+      const result = step2Schema.safeParse({
+        businessType: values.businessType,
+        foundedYear: values.foundedYear,
+        description: values.description ?? '',
+        registrationNumber: values.registrationNumber,
+      });
+      if (!result.success) {
+        result.error.issues.forEach((issue) => {
+          const field = issue.path[0] as keyof BusinessFormData;
+          if (field) {
+            form.setError(field, { message: issue.message });
+          }
+        });
+        return false;
+      }
+      return true;
+    }
+    const fields = STEP_FIELD_MAP[step];
+    if (!fields?.length) return true;
+    return form.trigger(fields as (keyof BusinessFormData)[]);
+  };
+
   const nextStep = async () => {
-    let isValid = false;
+    const isValid = await validateStep(currentStep);
+    if (!isValid) return;
 
-    // Validate based on current step
-    if (currentStep === 1) {
-      // Step 1: Basic Account Info (required)
-      isValid = await form.trigger(['name', 'category']);
-    } else if (currentStep === 2) {
-      // Step 2: Business Identity (required)
-      isValid = await form.trigger(['businessType']);
-    } else if (currentStep === 3) {
-      // Step 3: Collaboration Preference (required)
-      isValid = await form.trigger(['providesAdServices', 'isBuyer']);
-    } else {
-      // Steps 4-7 are optional, always valid
-      isValid = true;
-    }
-
-    if (isValid && currentStep < TOTAL_STEPS) {
-      setCurrentStep((prev) => prev + 1);
+    const next = Math.min(currentStep + 1, TOTAL_STEPS);
+    setIsSavingDraft(true);
+    try {
+      await persistDraft(next);
+      setCurrentStep(next);
+      setMaxReachableStep((prev) => Math.max(prev, next));
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setSubmitError(err.response?.data?.message || 'Failed to save progress');
+    } finally {
+      setIsSavingDraft(false);
     }
   };
 
-  /**
-   * Move to previous step
-   */
+  const skipStep = async () => {
+    if (!OPTIONAL_STEPS.includes(currentStep)) return;
+    const next = Math.min(currentStep + 1, TOTAL_STEPS);
+    setIsSavingDraft(true);
+    try {
+      await persistDraft(next);
+      setCurrentStep(next);
+      setMaxReachableStep((prev) => Math.max(prev, next));
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
   const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-    }
+    if (currentStep > 1) setCurrentStep((s) => s - 1);
   };
 
-  /**
-   * Navigate to specific step
-   */
   const goToStep = (step: number) => {
-    if (step >= 1 && step <= TOTAL_STEPS) {
+    if (step >= 1 && step <= TOTAL_STEPS && step <= maxReachableStep) {
       setCurrentStep(step);
     }
   };
 
-  /**
-   * Load existing business for the authenticated user
-   */
   const loadExistingBusiness = async () => {
     setIsLoadingBusiness(true);
     setSubmitError(null);
     try {
       const business = await businessApi.getMyBusiness();
-      setExistingBusiness(business);
-      
-      // Transform business data to form data
-      const formData = transformBusinessToFormData(business, enabledServices);
-      
-      // Populate form with existing business data
-      Object.keys(formData).forEach((key) => {
-        const value = formData[key as keyof typeof formData];
-        if (value !== undefined) {
-          form.setValue(key as keyof BusinessFormData, value as any);
-        }
-      });
-      
+      applyBusinessToForm(business);
       return business;
-    } catch (error: any) {
-      // 404 means no business exists yet, which is fine
-      if (error.response?.status !== 404) {
-        console.error('Error loading business:', error);
-        setSubmitError(error.response?.data?.message || 'Failed to load business data');
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      if (err.response?.status !== 404) {
+        setSubmitError(err.response?.data?.message || 'Failed to load business data');
       }
       return null;
     } finally {
@@ -168,15 +241,30 @@ export const useBusinessForm = () => {
     }
   };
 
-  /**
-   * Submit form to backend API
-   */
-  const submitForm = async () => {
-    // Validate all steps before submitting
+  const saveDraft = async () => {
+    setIsSavingDraft(true);
+    setSubmitError(null);
+    try {
+      await persistDraft(currentStep);
+      return { success: true };
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
+      let errorMessage = 'Failed to save draft.';
+      if (err.response?.data?.message) errorMessage = err.response.data.message;
+      else if (err.response?.data?.errors) {
+        const first = Object.values(err.response.data.errors)[0];
+        errorMessage = Array.isArray(first) ? first[0] : String(first);
+      }
+      setSubmitError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  const submitForm = async (forReview = true) => {
     const isValid = await form.trigger();
     if (!isValid) {
-      const errors = form.formState.errors;
-      console.error('Form validation errors:', errors);
       setSubmitError('Please fix the errors in the form before submitting.');
       return { success: false, error: 'Validation failed' };
     }
@@ -186,55 +274,38 @@ export const useBusinessForm = () => {
 
     try {
       const formData = form.getValues();
-      console.log('Submitting form data:', formData);
-      
-      // Ensure required fields are present
-      if (!formData.name || !formData.category || !formData.businessType) {
-        setSubmitError('Please complete all required fields (Steps 1-3) before submitting.');
-        return { success: false, error: 'Missing required fields' };
-      }
+      const payload = transformFormToUpdateData(formData, TOTAL_STEPS);
 
-      if (formData.providesAdServices === undefined || formData.isBuyer === undefined) {
-        setSubmitError('Please complete Step 3 (Collaboration Preference) before submitting.');
-        return { success: false, error: 'Missing collaboration preferences' };
-      }
-      
-      // Transform form data to backend format
-      let business: Business;
-      if (existingBusiness) {
-        const updateData = transformFormToUpdateData(formData, enabledServices);
-        business = await businessApi.updateBusiness(updateData);
+      let business: Business | null = existingBusiness;
+      if (business) {
+        business = await uploadPendingFiles(business);
+        const payloadAfterUpload = transformFormToUpdateData(form.getValues(), TOTAL_STEPS);
+        business = forReview
+          ? await businessApi.submitForReview(payloadAfterUpload)
+          : await businessApi.updateBusiness(payloadAfterUpload);
       } else {
-        const createData = transformFormToCreateData(formData, enabledServices);
-        business = await businessApi.createBusiness(createData);
+        business = await businessApi.createBusiness({
+          ...payload,
+          name: formData.name,
+          submit_for_review: forReview,
+        } as import('../api').CreateBusinessData);
+        business = await uploadPendingFiles(business);
       }
 
-      console.log('Business created/updated successfully:', business);
-      setExistingBusiness(business);
-      
-      // Clear form and localStorage
-      form.reset();
-      localStorage.removeItem(STORAGE_KEY);
-      setCurrentStep(1);
+      applyBusinessToForm(business!);
+      if (forReview) {
+        localStorage.removeItem(STORAGE_KEY);
+      }
 
       return { success: true, business };
-    } catch (error: any) {
-      console.error('Error submitting form:', error);
-      console.error('Error response:', error.response?.data);
-      
-      // Extract error message from response
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
       let errorMessage = 'Failed to save business. Please try again.';
-      if (error.response?.data) {
-        if (error.response.data.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response.data.errors) {
-          // Laravel validation errors
-          const errors = error.response.data.errors;
-          const firstError = Object.values(errors)[0];
-          errorMessage = Array.isArray(firstError) ? firstError[0] : String(firstError);
-        }
+      if (err.response?.data?.message) errorMessage = err.response.data.message;
+      else if (err.response?.data?.errors) {
+        const first = Object.values(err.response.data.errors)[0];
+        errorMessage = Array.isArray(first) ? first[0] : String(first);
       }
-      
       setSubmitError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -242,27 +313,28 @@ export const useBusinessForm = () => {
     }
   };
 
-  /**
-   * Get current step progress percentage
-   */
-  const getProgress = () => {
-    return (currentStep / TOTAL_STEPS) * 100;
-  };
+  const getProgress = () => completionPercentage || Math.round((currentStep / TOTAL_STEPS) * 100);
 
   return {
     form,
     currentStep,
     totalSteps: TOTAL_STEPS,
+    maxReachableStep,
     nextStep,
     prevStep,
     goToStep,
+    skipStep,
+    saveDraft,
     submitForm,
     getProgress,
+    completionPercentage,
+    completionSections,
     isSubmitting,
+    isSavingDraft,
     submitError,
     existingBusiness,
     isLoadingBusiness,
     loadExistingBusiness,
+    uploadRevision,
   };
 };
-

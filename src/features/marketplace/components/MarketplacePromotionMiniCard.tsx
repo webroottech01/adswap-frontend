@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Eye, Handshake, FileText } from 'lucide-react';
+import { Eye, Handshake, FileText, Bookmark, BookmarkCheck } from 'lucide-react';
 import type { Promotion } from '@/features/promotions/types';
 import {
   crossTypeLabel,
@@ -27,6 +27,12 @@ export interface MarketplacePromotionMiniCardProps {
   showActions?: boolean;
   onView?: () => void;
   onCollaborate?: () => void;
+  promotionSaved?: boolean;
+  onToggleSavePromotion?: () => void;
+  savePromotionLoading?: boolean;
+  brandSaved?: boolean;
+  onToggleSaveBrand?: () => void;
+  saveBrandLoading?: boolean;
 }
 
 export function MarketplacePromotionMiniCard({
@@ -36,6 +42,12 @@ export function MarketplacePromotionMiniCard({
   showActions = true,
   onView,
   onCollaborate,
+  promotionSaved = false,
+  onToggleSavePromotion,
+  savePromotionLoading = false,
+  brandSaved = false,
+  onToggleSaveBrand,
+  saveBrandLoading = false,
 }: MarketplacePromotionMiniCardProps) {
   const isPaid = promotion.category === 'paid';
   const thumb = promotion.media[0];
@@ -134,6 +146,30 @@ export function MarketplacePromotionMiniCard({
               onClick={onCollaborate}
             >
               <Handshake size={16} />
+            </button>
+          )}
+          {onToggleSavePromotion && (
+            <button
+              type="button"
+              className={`btn btn-sm py-0 px-2 ${promotionSaved ? 'btn-success' : 'btn-outline-secondary'}`}
+              title={promotionSaved ? 'Saved promotion' : 'Save promotion'}
+              aria-label={promotionSaved ? 'Saved promotion' : 'Save promotion'}
+              onClick={onToggleSavePromotion}
+              disabled={savePromotionLoading}
+            >
+              {promotionSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+            </button>
+          )}
+          {onToggleSaveBrand && (
+            <button
+              type="button"
+              className={`btn btn-sm py-0 px-2 ${brandSaved ? 'btn-success' : 'btn-outline-secondary'}`}
+              title={brandSaved ? 'Saved brand' : 'Save brand'}
+              aria-label={brandSaved ? 'Saved brand' : 'Save brand'}
+              onClick={onToggleSaveBrand}
+              disabled={saveBrandLoading}
+            >
+              {brandSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
             </button>
           )}
         </div>

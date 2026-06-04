@@ -35,4 +35,9 @@ export const ASSET_TYPE_LABELS: Record<string, string> = {
   logo: 'Business logo',
   brand_image: 'Outlet / workspace photos',
   promotional_material: 'Promotional images',
+  outlet_image: 'Outlet images',
+  promotional_creative: 'Promotional creatives',
+  brochure: 'Brochure',
+  menu: 'Menu',
+  rate_card: 'Rate card',
 };
