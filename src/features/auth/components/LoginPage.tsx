@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,15 +11,17 @@ import { loginSchema, type LoginFormData } from '../validation';
 
 export function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, isLoading, error: loginError } = useLogin();
   const { isAuthenticated, user } = useAuthSession();
+  const next = searchParams?.get('next') ?? null;
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      router.push('/dashboard');
+      router.push(next ?? '/dashboard');
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, next, router]);
 
   const {
     register,
@@ -32,8 +34,7 @@ export function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     const result = await login({ email: data.email, password: data.password });
     if (result.success) {
-      // Redirect will happen via useEffect when isAuthenticated changes
-      router.push('/dashboard');
+      // Redirect handled via useEffect once auth state updates.
     }
   };
 

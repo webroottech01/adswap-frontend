@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ConversationListItem, ConversationsMeta } from '../types';
 import { ConversationsSidebarSkeleton } from './ConversationsSidebarSkeleton';
+import { formatConversationLabel } from '../utils/conversationLabel';
 
 interface ConversationsSidebarProps {
   conversations: ConversationListItem[] | undefined;
@@ -56,9 +57,13 @@ export function ConversationsSidebar({
                     activeId === conversation.id ? 'text-white' : 'text-body'
                   }`}
                 >
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <span className="fw-semibold">
-                      {conversation.partner_business_name ?? `Conversation #${conversation.id}`}
+                  <div className="d-flex justify-content-between align-items-center mb-1 gap-2">
+                    <span className="fw-semibold text-truncate">
+                      {formatConversationLabel(
+                        conversation.partner_business_name,
+                        conversation.target_promotion_title,
+                        conversation.id,
+                      )}
                     </span>
                     <span className="small text-muted">
                       {new Date(conversation.updated_at).toLocaleDateString()}
