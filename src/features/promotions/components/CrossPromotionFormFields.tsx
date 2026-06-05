@@ -5,6 +5,7 @@ import type { CrossPromotionDetails } from '../types';
 import { SearchableCategoryChecklist } from '@/features/business/components/SearchableCategoryChecklist';
 import { useBusinessCategories } from '@/features/business/hooks/useBusinessCategories';
 import { LOCATION_RADIUS_OPTIONS } from '@/shared/constants/collaborationPreferences';
+import { getCrossPromotionDateBounds } from '../utils/dateBounds';
 
 interface CrossPromotionFormFieldsProps {
   title: string;
@@ -22,7 +23,9 @@ export function CrossPromotionFormFields({
   onDetailsChange,
 }: CrossPromotionFormFieldsProps) {
   const { categories, loading: categoriesLoading } = useBusinessCategories();
+  const { minStartDate, maxEndDate } = getCrossPromotionDateBounds();
   const duration = details.available_duration ?? {};
+  const minEndDate = duration.start_date || minStartDate;
   const partnerIds = details.target_partner_category_ids ?? [];
   const legacyCategoryText =
     !partnerIds.length && details.target_partner_category?.trim()
@@ -38,6 +41,31 @@ export function CrossPromotionFormFields({
       ...details,
       available_duration: { ...duration, ...patchDuration },
     });
+  };
+
+  const handleStartDateChange = (value: string) => {
+    const startDate = value || undefined;
+    const endDate = duration.end_date;
+    const endInvalid =
+      endDate &&
+      startDate &&
+      (endDate < startDate || endDate > maxEndDate);
+
+    patchDuration({
+      start_date: startDate,
+      ...(endInvalid ? { end_date: undefined } : {}),
+    });
+  };
+
+  const handleEndDateChange = (value: string) => {
+    if (!value) {
+      patchDuration({ end_date: undefined });
+      return;
+    }
+    if (value < minEndDate || value > maxEndDate) {
+      return;
+    }
+    patchDuration({ end_date: value });
   };
 
   return (
@@ -158,7 +186,8 @@ export function CrossPromotionFormFields({
               type="date"
               className="form-control"
               value={duration.start_date ?? ''}
-              onChange={(e) => patchDuration({ start_date: e.target.value || undefined })}
+              min={minStartDate}
+              onChange={(e) => handleStartDateChange(e.target.value)}
               disabled={loading}
             />
           </div>
@@ -171,7 +200,9 @@ export function CrossPromotionFormFields({
               type="date"
               className="form-control"
               value={duration.end_date ?? ''}
-              onChange={(e) => patchDuration({ end_date: e.target.value || undefined })}
+              min={minEndDate}
+              max={maxEndDate}
+              onChange={(e) => handleEndDateChange(e.target.value)}
               disabled={loading}
             />
           </div>

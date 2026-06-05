@@ -33,7 +33,7 @@ const navigationItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: 'Discover Businesses',
+    title: 'Discover Promotions',
     href: '/marketplace',
     icon: Store,
   },
