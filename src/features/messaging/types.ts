@@ -5,12 +5,13 @@ export interface Conversation {
   business_two_id: number;
   created_at: string;
   updated_at: string;
+  partner_business_name?: string | null;
+  target_promotion_title?: string | null;
 }
 
 export interface ConversationListItem extends Conversation {
   last_message_text?: string | null;
   last_message_sender_business_id?: number | null;
-  partner_business_name?: string | null;
 }
 
 export interface ConversationsMeta {

@@ -9,12 +9,12 @@ import {
   Package,
   MessageSquare,
   Calendar,
-  BarChart3,
+  // BarChart3,
   Settings,
   LogOut,
   Users,
   Shield,
-  CreditCard,
+  // CreditCard,
   Handshake,
   Megaphone,
 } from 'lucide-react';
@@ -67,16 +67,16 @@ const navigationItems: NavItem[] = [
     href: '/collaborations',
     icon: Handshake,
   },
-  {
-    title: 'Analytics',
-    href: '/analytics',
-    icon: BarChart3,
-  },
-  {
-    title: 'Billing',
-    href: '/billing',
-    icon: CreditCard,
-  },
+  // {
+  //   title: 'Analytics',
+  //   href: '/analytics',
+  //   icon: BarChart3,
+  // },
+  // {
+  //   title: 'Billing',
+  //   href: '/billing',
+  //   icon: CreditCard,
+  // },
   {
     title: 'Settings',
     href: '/settings',

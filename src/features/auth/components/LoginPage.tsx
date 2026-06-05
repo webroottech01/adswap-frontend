@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -11,15 +11,21 @@ import { loginSchema, type LoginFormData } from '../validation';
 
 export function LoginPage() {
   const router = useRouter();
+  const [nextPath, setNextPath] = useState<string | null>(null);
   const { login, isLoading, error: loginError } = useLogin();
   const { isAuthenticated, user } = useAuthSession();
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get('next');
+    setNextPath(next);
+  }, []);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      router.push('/dashboard');
+      router.push(nextPath ?? '/dashboard');
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, nextPath, router]);
 
   const {
     register,
@@ -32,8 +38,7 @@ export function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     const result = await login({ email: data.email, password: data.password });
     if (result.success) {
-      // Redirect will happen via useEffect when isAuthenticated changes
-      router.push('/dashboard');
+      // Redirect handled via useEffect once auth state updates.
     }
   };
 

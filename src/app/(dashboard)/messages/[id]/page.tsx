@@ -12,6 +12,7 @@ import {
   MessageInput,
 } from '@/features/messaging';
 import type { MessageSendPayload } from '@/features/messaging/components/MessageInput';
+import { formatConversationLabel } from '@/features/messaging/utils/conversationLabel';
 
 export default function MessageConversationPage() {
   const params = useParams();
@@ -51,10 +52,16 @@ export default function MessageConversationPage() {
 
   const messages = conversationDetail?.messages ?? [];
 
-  const partnerName = useMemo(() => {
+  const conversationTitle = useMemo(() => {
     const match = conversations?.find((c) => c.id === conversationId);
-    return match?.partner_business_name ?? null;
-  }, [conversations, conversationId]);
+    const detail = conversationDetail?.conversation;
+    const businessName =
+      match?.partner_business_name ?? detail?.partner_business_name ?? null;
+    const promotionTitle =
+      match?.target_promotion_title ?? detail?.target_promotion_title ?? null;
+
+    return formatConversationLabel(businessName, promotionTitle, conversationId);
+  }, [conversations, conversationId, conversationDetail?.conversation]);
 
   const appendFiles = useCallback((incoming: File[]) => {
     setPendingFiles((prev) => {
@@ -103,7 +110,7 @@ export default function MessageConversationPage() {
             loading={messagesLoading}
             error={messagesError}
             currentBusinessId={myBusinessId}
-            partnerBusinessName={partnerName}
+            conversationTitle={conversationTitle}
             onFilesDropped={appendFiles}
             isDragOver={chatDragOver}
           />
