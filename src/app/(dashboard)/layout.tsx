@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from '@/shared/layout';
 import { useEffect } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthSession } from '@/features/auth/public';
 
 export default function DashboardLayoutWrapper({
@@ -12,18 +12,16 @@ export default function DashboardLayoutWrapper({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useAuthSession();
 
   useEffect(() => {
     // Redirect to login if not authenticated (after loading completes)
     if (!isLoading && !isAuthenticated) {
-      const queryString = searchParams?.toString();
-      const nextUrl =
-        (pathname ?? '/dashboard') + (queryString ? `?${queryString}` : '');
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      const nextUrl = (pathname ?? '/dashboard') + search;
       router.push(`/login?next=${encodeURIComponent(nextUrl)}`);
     }
-  }, [isAuthenticated, isLoading, pathname, searchParams, router]);
+  }, [isAuthenticated, isLoading, pathname, router]);
 
   // Show nothing while checking auth status
   if (isLoading) {

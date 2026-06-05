@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,17 +11,21 @@ import { loginSchema, type LoginFormData } from '../validation';
 
 export function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [nextPath, setNextPath] = useState<string | null>(null);
   const { login, isLoading, error: loginError } = useLogin();
   const { isAuthenticated, user } = useAuthSession();
-  const next = searchParams?.get('next') ?? null;
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get('next');
+    setNextPath(next);
+  }, []);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      router.push(next ?? '/dashboard');
+      router.push(nextPath ?? '/dashboard');
     }
-  }, [isAuthenticated, user, next, router]);
+  }, [isAuthenticated, user, nextPath, router]);
 
   const {
     register,
